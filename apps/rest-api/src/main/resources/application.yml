@@ -1,0 +1,12 @@
+spring:
+  application:
+    name: aura-rest-api
+  # Профиль local — по умолчанию (IDE/java -jar работают без явного профиля).
+  # Прод обязан задавать SPRING_PROFILES_ACTIVE явно.
+  profiles:
+    default: local
+  jpa:
+    open-in-view: false
+  liquibase:
+    change-log: classpath:db/changelog/master.yaml
+    liquibase-schema: liquibase

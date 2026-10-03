@@ -64,7 +64,11 @@ docker compose up -d
 #    клонируйте его и запустите по его README, указав CORE_BASE_URL=http://localhost:8080
 ```
 
-- Swagger UI: <http://localhost:8080/swagger-ui.html> (профиль `local`).
+> Профиль `local` активен **по умолчанию** (`spring.profiles.default` в `application.yml`) — запуск из IDE или `java -jar` работает без дополнительной настройки. Прод-окружение обязано задавать `SPRING_PROFILES_ACTIVE` явно.
+
+> На этапе каркаса security настроен минимально: `/actuator/health` открыт, всё остальное отвечает `401` (JWT-аутентификация — этап 1, см. [roadmap.md](roadmap.md)).
+
+- Swagger UI: <http://localhost:8080/docs/index.html> (корень `/` — редирект на него; спека — <http://localhost:8080/openapi/api.yaml>).
 - Порты: `8080` — API, `5432` — Postgres, `6379` — Redis (`8081` — actuator бота из его репозитория).
 
 ## Переменные окружения (rest-api, профиль local)

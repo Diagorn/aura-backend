@@ -38,13 +38,13 @@ api/openapi/
 
 | Что | Инструмент | Результат |
 |---|---|---|
-| Сервер | **openapi-processor-spring** | интерфейсы контроллеров + DTO (Kotlin) в `build/generated/` |
+| Сервер | **openapi-generator** 7.14, `generatorName=kotlin-spring` (`interfaceOnly=true`, `useSpringBoot3=true`) | интерфейсы контроллеров + DTO (Kotlin, с nullability) в `build/generated/api-openapi/` |
 | Клиент бота (в его репозитории) | **openapi-generator**, `library=spring-http-interface` | генерируется из **опубликованного** бандла спеки; версия пинится в репозитории бота |
 | Фронтенд | любой генератор на стороне фронта | потребляет тот же `api.yaml` |
 
-- Задачи генерации объявлены в convention-плагине `aura.openapi` (см. [gradle-structure.md](gradle-structure.md)); выход добавлен в source sets, **в git не коммитится**.
+- Задача `generateApi` объявлена в `apps/rest-api/build.gradle.kts` (плагин `org.openapi.generator`); выход добавлен в source sets и **в git не коммитится**.
 - Контроллеры модулей реализуют сгенерированные интерфейсы — компиляция «показывает» незакрытые контракты.
-- ⚠️ На этапе каркаса проверить совместимость версий генераторов с Boot 4 / Jackson 3 (openapi-processor-spring 2025.x+, openapi-generator 7.x+). Fallback: openapi-generator (spring generator) для сервера и клиента.
+- Выбор генератора: `kotlin-spring` даёт Kotlin-DTO с nullability (правило платформенных типов); openapi-processor-spring отклонён — генерирует Java. Спека пока OpenAPI **3.0.3**; на 3.1 переходить только после проверки поддержки генераторами.
 
 ## Процесс работы
 
@@ -55,7 +55,7 @@ api/openapi/
 
 ## Документация
 
-- Dev: Swagger UI на rest-api (`/swagger-ui.html`, только профиль `local`).
+- Dev: Swagger UI — <http://localhost:8080/docs/index.html> (корень `/` делает редирект туда же). UI читает спеку с `/openapi/api.yaml` — ту же, из которой генерируется код; Swagger UI — webjar `org.webjars:swagger-ui`, версия подставляется при сборке из `libs.versions.toml`.
 - Публикация: CI-задача бандлит спеку (`redocly bundle`) и публикует артефакт (GitHub Release/артефакт) + Redoc-страницу. Потребители — фронтенд и репозиторий Telegram-бота: оба пинят версию спеки и генерируют свой код у себя.
 
 ## Эволюция контракта

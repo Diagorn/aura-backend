@@ -1,0 +1,16 @@
+me:
+  get:
+    tags:
+      - me
+    operationId: getMe
+    summary: Профиль текущего пользователя
+    description: Возвращает профиль авторизованного пользователя. Поле telegram заполнено после привязки аккаунта — telegram.userId используется ботом как chat_id для доставки сообщений.
+    responses:
+      '200':
+        description: Профиль пользователя
+        content:
+          application/json:
+            schema:
+              $ref: '../components/schemas/me.yaml#/MeResponse'
+      '401':
+        $ref: '../components/responses.yaml#/Unauthorized'

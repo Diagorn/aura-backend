@@ -1,0 +1,40 @@
+MeResponse:
+  type: object
+  required:
+    - id
+    - email
+    - timezone
+    - locale
+    - telegram
+  properties:
+    id:
+      type: integer
+      format: int64
+      description: Идентификатор пользователя
+    email:
+      type: string
+      format: email
+    timezone:
+      type: string
+      description: IANA-таймзона, например Europe/Moscow
+    locale:
+      type: string
+      description: Локаль, например ru
+    telegram:
+      nullable: true
+      allOf:
+        - $ref: '#/TelegramProfile'
+      description: Привязанный Telegram-аккаунт либо null
+
+TelegramProfile:
+  type: object
+  required:
+    - userId
+  properties:
+    userId:
+      type: string
+      description: ID пользователя в Telegram (= chat_id в личном чате)
+    username:
+      type: string
+      nullable: true
+      description: Имя пользователя в Telegram (@username), может отсутствовать

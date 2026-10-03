@@ -1,0 +1,6 @@
+Unauthorized:
+  description: Нет или просрочен токен доступа
+  content:
+    application/problem+json:
+      schema:
+        $ref: './schemas/common.yaml#/Problem'
