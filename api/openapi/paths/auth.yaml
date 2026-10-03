@@ -1,0 +1,123 @@
+register:
+  post:
+    tags:
+      - auth
+    operationId: register
+    summary: Регистрация пользователя
+    description: >
+      Создаёт аккаунт и сразу возвращает пару токенов.
+      Таймзона, если не указана, — UTC+3; локаль по умолчанию — ru.
+    security: []
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '../components/schemas/auth.yaml#/RegisterRequest'
+    responses:
+      '201':
+        description: Пользователь зарегистрирован, пара токенов выдана
+        content:
+          application/json:
+            schema:
+              $ref: '../components/schemas/auth.yaml#/AuthResponse'
+      '409':
+        $ref: '../components/responses.yaml#/Conflict'
+      '422':
+        $ref: '../components/responses.yaml#/ValidationFailed'
+
+login:
+  post:
+    tags:
+      - auth
+    operationId: login
+    summary: Вход по email и паролю
+    security: []
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '../components/schemas/auth.yaml#/LoginRequest'
+    responses:
+      '200':
+        description: Успешный вход, пара токенов выдана
+        content:
+          application/json:
+            schema:
+              $ref: '../components/schemas/auth.yaml#/AuthResponse'
+      '401':
+        $ref: '../components/responses.yaml#/Unauthorized'
+      '422':
+        $ref: '../components/responses.yaml#/ValidationFailed'
+
+refresh:
+  post:
+    tags:
+      - auth
+    operationId: refresh
+    summary: Обновление пары токенов (ротация)
+    description: >
+      Старый refresh-токен отзывается, выдаётся новая пара.
+      Повторное использование уже отозванного refresh-токена — отзыв всей цепочки пользователя и 401.
+    security: []
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '../components/schemas/auth.yaml#/RefreshRequest'
+    responses:
+      '200':
+        description: Новая пара токенов
+        content:
+          application/json:
+            schema:
+              $ref: '../components/schemas/auth.yaml#/AuthResponse'
+      '401':
+        $ref: '../components/responses.yaml#/Unauthorized'
+      '422':
+        $ref: '../components/responses.yaml#/ValidationFailed'
+
+logout:
+  post:
+    tags:
+      - auth
+    operationId: logout
+    summary: Выход (отзыв refresh-токена)
+    description: >
+      Отзывает переданный refresh-токен. Повторный вызов с тем же токеном
+      возвращает 204 — операция идемпотентна.
+    security: []
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '../components/schemas/auth.yaml#/LogoutRequest'
+    responses:
+      '204':
+        description: Refresh-токен отозван
+      '401':
+        $ref: '../components/responses.yaml#/Unauthorized'
+
+telegramLinkCode:
+  post:
+    tags:
+      - auth
+    operationId: createTelegramLinkCode
+    summary: Код для связки аккаунта с Telegram
+    description: >
+      Выдаёт одноразовый код на 10 минут; используется ботом в `/internal/v1/auth/telegram/link`.
+      Если аккаунт уже связан с Telegram — 409.
+    responses:
+      '201':
+        description: Код создан
+        content:
+          application/json:
+            schema:
+              $ref: '../components/schemas/auth.yaml#/TelegramLinkCodeResponse'
+      '401':
+        $ref: '../components/responses.yaml#/Unauthorized'
+      '409':
+        $ref: '../components/responses.yaml#/Conflict'

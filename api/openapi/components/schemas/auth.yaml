@@ -1,0 +1,111 @@
+RegisterRequest:
+  type: object
+  required:
+    - email
+    - password
+  properties:
+    email:
+      type: string
+      format: email
+      maxLength: 255
+    password:
+      type: string
+      format: password
+      minLength: 8
+      maxLength: 72
+    timezone:
+      type: string
+      maxLength: 64
+      description: IANA-таймзона, например Europe/Moscow; по умолчанию Europe/Moscow (UTC+3)
+
+LoginRequest:
+  type: object
+  required:
+    - email
+    - password
+  properties:
+    email:
+      type: string
+      format: email
+      maxLength: 255
+    password:
+      type: string
+      format: password
+      maxLength: 72
+
+RefreshRequest:
+  type: object
+  required:
+    - refreshToken
+  properties:
+    refreshToken:
+      type: string
+      maxLength: 2048
+
+LogoutRequest:
+  type: object
+  required:
+    - refreshToken
+  properties:
+    refreshToken:
+      type: string
+      maxLength: 2048
+
+AuthResponse:
+  type: object
+  required:
+    - user
+    - accessToken
+    - refreshToken
+  properties:
+    user:
+      $ref: './me.yaml#/MeResponse'
+    accessToken:
+      type: string
+      description: JWT access-токен, 15 минут
+    refreshToken:
+      type: string
+      description: JWT refresh-токен, 30 дней, ротируется при каждом обновлении
+
+TelegramLinkCodeResponse:
+  type: object
+  required:
+    - code
+    - expiresAt
+  properties:
+    code:
+      type: string
+      description: Одноразовый код связки
+    expiresAt:
+      type: string
+      format: date-time
+      description: Момент истечения кода (10 минут с выдачи)
+
+UpdateMeRequest:
+  type: object
+  properties:
+    timezone:
+      type: string
+      maxLength: 64
+      description: IANA-таймзона; null/отсутствие — не менять
+    locale:
+      type: string
+      pattern: '^[a-zA-Z]{2}(-[a-zA-Z]{2})?$'
+      maxLength: 16
+      description: Локаль, например ru или en-US; null/отсутствие — не менять
+
+ChangePasswordRequest:
+  type: object
+  required:
+    - currentPassword
+    - newPassword
+  properties:
+    currentPassword:
+      type: string
+      format: password
+      maxLength: 72
+    newPassword:
+      type: string
+      format: password
+      minLength: 8
+      maxLength: 72

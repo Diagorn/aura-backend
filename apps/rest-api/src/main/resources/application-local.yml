@@ -3,3 +3,9 @@ spring:
     url: jdbc:postgresql://localhost:5432/aura
     username: aura
     password: aura
+
+# Dev-секрет JWT (>= 32 байт); в реальной разработке задаётся через JWT_SECRET из .env
+aura:
+  security:
+    jwt:
+      secret: ${JWT_SECRET:dev-only-secret-0123456789abcdef0123456789abcdef}

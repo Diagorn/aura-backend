@@ -14,11 +14,35 @@ servers:
 tags:
   - name: me
     description: Профиль текущего пользователя
+  - name: auth
+    description: Аутентификация, регистрация и связка с Telegram
+  - name: internal
+    description: >
+      Внутренний API для Telegram-бота; аутентификация — сервисный JWT
+      (typ=service, scope=internal). Не публикуется во внешней документации.
 security:
   - bearerAuth: []
 paths:
   /api/v1/me:
     $ref: './paths/me.yaml#/me'
+  /api/v1/me/password:
+    $ref: './paths/me.yaml#/mePassword'
+  /api/v1/auth/register:
+    $ref: './paths/auth.yaml#/register'
+  /api/v1/auth/login:
+    $ref: './paths/auth.yaml#/login'
+  /api/v1/auth/refresh:
+    $ref: './paths/auth.yaml#/refresh'
+  /api/v1/auth/logout:
+    $ref: './paths/auth.yaml#/logout'
+  /api/v1/auth/telegram/link-code:
+    $ref: './paths/auth.yaml#/telegramLinkCode'
+  /internal/v1/auth/service-token:
+    $ref: './paths/internal.yaml#/serviceToken'
+  /internal/v1/auth/telegram/link:
+    $ref: './paths/internal.yaml#/telegramLink'
+  /internal/v1/auth/telegram/exchange:
+    $ref: './paths/internal.yaml#/telegramExchange'
 components:
   securitySchemes:
     bearerAuth:

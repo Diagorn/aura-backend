@@ -16,6 +16,11 @@ swagger-ui = "5.32.15"
 [libraries]
 spring-boot-bom = { module = "org.springframework.boot:spring-boot-dependencies", version.ref = "spring-boot" }
 
+# Без версии: manage'ится BOM'ом Spring Boot (выровнен с kotlin.version).
+# Нужен в runtime: Spring Data для Kotlin-сущностей требует kotlin.reflect.full
+# (mockk тянет его только в test-classpath — bootRun падал с NoClassDefFoundError).
+kotlin-reflect = { module = "org.jetbrains.kotlin:kotlin-reflect" }
+
 spring-boot-starter-webmvc = { module = "org.springframework.boot:spring-boot-starter-webmvc" }
 spring-boot-starter-security = { module = "org.springframework.boot:spring-boot-starter-security" }
 spring-boot-starter-data-jpa = { module = "org.springframework.boot:spring-boot-starter-data-jpa" }
@@ -27,8 +32,19 @@ spring-boot-starter-test = { module = "org.springframework.boot:spring-boot-star
 spring-boot-starter-webmvc-test = { module = "org.springframework.boot:spring-boot-starter-webmvc-test" }
 spring-boot-starter-data-jpa-test = { module = "org.springframework.boot:spring-boot-starter-data-jpa-test" }
 spring-security-test = { module = "org.springframework.security:spring-security-test" }
+spring-boot-security-test = { module = "org.springframework.boot:spring-boot-security-test" }
+
+# JWT (HS256 в dev): кодирование/декодирование на Nimbus из Spring Security
+spring-security-oauth2-jose = { module = "org.springframework.security:spring-security-oauth2-jose" }
+
+# Testcontainers (версии из BOM Boot); в TC 2.x модули переименованы с префиксом testcontainers-
+spring-boot-testcontainers = { module = "org.springframework.boot:spring-boot-testcontainers" }
+spring-boot-resttestclient = { module = "org.springframework.boot:spring-boot-resttestclient" }
+testcontainers-postgresql = { module = "org.testcontainers:testcontainers-postgresql" }
+testcontainers-junit-jupiter = { module = "org.testcontainers:testcontainers-junit-jupiter" }
 
 spring-modulith-starter-core = { module = "org.springframework.modulith:spring-modulith-starter-core", version.ref = "spring-modulith" }
+spring-modulith-core = { module = "org.springframework.modulith:spring-modulith-core", version.ref = "spring-modulith" }
 spring-modulith-starter-test = { module = "org.springframework.modulith:spring-modulith-starter-test", version.ref = "spring-modulith" }
 
 liquibase-core = { module = "org.liquibase:liquibase-core" }

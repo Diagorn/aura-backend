@@ -1,0 +1,1340 @@
+{
+	"info": {
+		"_postman_id": "d3f8c1a2-4b5e-4c7a-9d21-6f0a52b7e9aa",
+		"name": "Aura API",
+		"description": "Запросы к REST API Aura (этап 1 — auth и профиль).\n\n**Пользовательский флоу:** Register → Login → /me → Refresh → Logout → Telegram link-code.\n**Контур бота:** Service token → Telegram link → Exchange.\n\nТокены сохраняются автоматически скриптами (вкладка Tests запросов):\n- `accessToken` / `refreshToken` — из register, login, refresh;\n- `serviceToken` — из service-token;\n- `telegramLinkCode` — из link-code;\n- `botAccessToken` — из exchange (токен бота для действий от имени пользователя).\n\nУ каждого запроса во вкладке **Examples** — примеры ответов: успех и основные ошибки (RFC 9457 problem+json).\n\nЗапуск приложения: `docker compose up -d`, затем `./gradlew :apps:rest-api:bootRun`.\nДефолтная регистрация без timezone даёт Europe/Moscow (UTC+3).\nСпека: http://localhost:8080/openapi/api.yaml (Swagger UI — http://localhost:8080/docs/index.html).",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"variable": [
+		{
+			"key": "baseUrl",
+			"value": "http://localhost:8080",
+			"type": "string"
+		},
+		{
+			"key": "email",
+			"value": "anna@example.com",
+			"type": "string"
+		},
+		{
+			"key": "password",
+			"value": "secret-password-1",
+			"type": "string"
+		},
+		{
+			"key": "newPassword",
+			"value": "changed-secret-1",
+			"type": "string"
+		},
+		{
+			"key": "accessToken",
+			"value": "",
+			"type": "string"
+		},
+		{
+			"key": "refreshToken",
+			"value": "",
+			"type": "string"
+		},
+		{
+			"key": "serviceToken",
+			"value": "",
+			"type": "string"
+		},
+		{
+			"key": "telegramLinkCode",
+			"value": "",
+			"type": "string"
+		},
+		{
+			"key": "botAccessToken",
+			"value": "",
+			"type": "string"
+		},
+		{
+			"key": "telegramUserId",
+			"value": "900168",
+			"type": "string"
+		},
+		{
+			"key": "telegramUsername",
+			"value": "aura_tester",
+			"type": "string"
+		}
+	],
+	"item": [
+		{
+			"name": "Auth",
+			"description": "Регистрация, вход, ротация refresh-токенов, выход, код связки с Telegram.",
+			"item": [
+				{
+					"name": "Register",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"email\": \"{{email}}\",\n  \"password\": \"{{password}}\",\n  \"timezone\": \"Europe/Moscow\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": "{{baseUrl}}/api/v1/auth/register",
+						"description": "Создаёт аккаунт и сразу возвращает пару токенов.\n201 — успех; 409 EMAIL_ALREADY_EXISTS; 422 — валидация.\ntimezone опциональна (по умолчанию Europe/Moscow, UTC+3).\n**Скрипт сохраняет accessToken/refreshToken в переменные коллекции.**"
+					},
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"if (pm.response.code === 201) {",
+									"    const json = pm.response.json();",
+									"    pm.collectionVariables.set('accessToken', json.accessToken);",
+									"    pm.collectionVariables.set('refreshToken', json.refreshToken);",
+									"    pm.test('токены сохранены', () => {",
+									"        pm.expect(json.accessToken).to.be.a('string').and.not.be.empty;",
+									"        pm.expect(json.refreshToken).to.be.a('string').and.not.be.empty;",
+									"    });",
+									"}"
+								]
+							}
+						}
+					],
+					"response": [
+						{
+							"name": "201 — аккаунт создан, пара токенов",
+							"originalRequest": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n  \"email\": \"anna@example.com\",\n  \"password\": \"secret-password-1\",\n  \"timezone\": \"Europe/Moscow\"\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": "{{baseUrl}}/api/v1/auth/register"
+							},
+							"status": "Created",
+							"code": 201,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Content-Type",
+									"value": "application/json"
+								}
+							],
+							"cookie": [],
+							"body": "{\n  \"user\": {\n    \"id\": 1,\n    \"email\": \"anna@example.com\",\n    \"timezone\": \"Europe/Moscow\",\n    \"locale\": \"ru\",\n    \"telegram\": null\n  },\n  \"accessToken\": \"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxIiwidHlwIjoiYWNjZXNzIiwicm9sZXMiOlsiVVNFUiJdfQ.AuR4-example-signature-0001\",\n  \"refreshToken\": \"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxIiwidHlwIjoicmVmcmVzaCJ9.Rf7-example-signature-0002\"\n}"
+						},
+						{
+							"name": "409 — email уже занят",
+							"originalRequest": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n  \"email\": \"anna@example.com\",\n  \"password\": \"secret-password-1\",\n  \"timezone\": \"Europe/Moscow\"\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": "{{baseUrl}}/api/v1/auth/register"
+							},
+							"status": "Conflict",
+							"code": 409,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Content-Type",
+									"value": "application/problem+json"
+								}
+							],
+							"cookie": [],
+							"body": "{\n  \"type\": \"https://aura.example.com/problems/email-already-exists\",\n  \"title\": \"Conflict\",\n  \"status\": 409,\n  \"detail\": \"Пользователь с таким email уже зарегистрирован\",\n  \"instance\": \"/api/v1/auth/register\",\n  \"code\": \"EMAIL_ALREADY_EXISTS\"\n}"
+						},
+						{
+							"name": "422 — валидация полей",
+							"originalRequest": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n  \"email\": \"not-an-email\",\n  \"password\": \"123\",\n  \"timezone\": \"Europe/Moscow\"\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": "{{baseUrl}}/api/v1/auth/register"
+							},
+							"status": "Unprocessable Entity",
+							"code": 422,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Content-Type",
+									"value": "application/problem+json"
+								}
+							],
+							"cookie": [],
+							"body": "{\n  \"type\": \"https://aura.example.com/problems/validation-failed\",\n  \"title\": \"Unprocessable Entity\",\n  \"status\": 422,\n  \"detail\": \"Некоторые поля некорректны\",\n  \"instance\": \"/api/v1/auth/register\",\n  \"code\": \"VALIDATION_FAILED\",\n  \"errors\": [\n    {\n      \"field\": \"email\",\n      \"message\": \"должно иметь формат адреса email\"\n    },\n    {\n      \"field\": \"password\",\n      \"message\": \"размер должен быть в диапазоне 8 - 72\"\n    }\n  ]\n}"
+						}
+					]
+				},
+				{
+					"name": "Login",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"email\": \"{{email}}\",\n  \"password\": \"{{password}}\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": "{{baseUrl}}/api/v1/auth/login",
+						"description": "Вход по email + паролю.\n200 — новая пара токенов; 401 INVALID_CREDENTIALS.\n**Скрипт сохраняет accessToken/refreshToken.**"
+					},
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"if (pm.response.code === 200) {",
+									"    const json = pm.response.json();",
+									"    pm.collectionVariables.set('accessToken', json.accessToken);",
+									"    pm.collectionVariables.set('refreshToken', json.refreshToken);",
+									"}"
+								]
+							}
+						}
+					],
+					"response": [
+						{
+							"name": "200 — пара токенов",
+							"originalRequest": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n  \"email\": \"anna@example.com\",\n  \"password\": \"secret-password-1\"\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": "{{baseUrl}}/api/v1/auth/login"
+							},
+							"status": "OK",
+							"code": 200,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Content-Type",
+									"value": "application/json"
+								}
+							],
+							"cookie": [],
+							"body": "{\n  \"user\": {\n    \"id\": 1,\n    \"email\": \"anna@example.com\",\n    \"timezone\": \"Europe/Moscow\",\n    \"locale\": \"ru\",\n    \"telegram\": null\n  },\n  \"accessToken\": \"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxIiwidHlwIjoiYWNjZXNzIiwicm9sZXMiOlsiVVNFUiJdfQ.AuR4-example-signature-0001\",\n  \"refreshToken\": \"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxIiwidHlwIjoicmVmcmVzaCJ9.Rf7-example-signature-0002\"\n}"
+						},
+						{
+							"name": "401 — неверные креды",
+							"originalRequest": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n  \"email\": \"anna@example.com\",\n  \"password\": \"wrong-password\"\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": "{{baseUrl}}/api/v1/auth/login"
+							},
+							"status": "Unauthorized",
+							"code": 401,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Content-Type",
+									"value": "application/problem+json"
+								}
+							],
+							"cookie": [],
+							"body": "{\n  \"type\": \"https://aura.example.com/problems/invalid-credentials\",\n  \"title\": \"Unauthorized\",\n  \"status\": 401,\n  \"detail\": \"Неверный email или пароль\",\n  \"instance\": \"/api/v1/auth/login\",\n  \"code\": \"INVALID_CREDENTIALS\"\n}"
+						}
+					]
+				},
+				{
+					"name": "Refresh",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"refreshToken\": \"{{refreshToken}}\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": "{{baseUrl}}/api/v1/auth/refresh",
+						"description": "Ротация: старый refresh-токен отзывается, выдаётся новая пара.\n401 REFRESH_TOKEN_REUSE — повторное использование отозванного (вся цепочка отозвана).\n**Скрипт сохраняет новую пару токенов — можно вызывать подряд.**"
+					},
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"if (pm.response.code === 200) {",
+									"    const json = pm.response.json();",
+									"    pm.collectionVariables.set('accessToken', json.accessToken);",
+									"    pm.collectionVariables.set('refreshToken', json.refreshToken);",
+									"}"
+								]
+							}
+						}
+					],
+					"response": [
+						{
+							"name": "200 — новая пара токенов",
+							"originalRequest": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n  \"refreshToken\": \"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxIiwidHlwIjoicmVmcmVzaCJ9.Rf7-example-signature-0002\"\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": "{{baseUrl}}/api/v1/auth/refresh"
+							},
+							"status": "OK",
+							"code": 200,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Content-Type",
+									"value": "application/json"
+								}
+							],
+							"cookie": [],
+							"body": "{\n  \"user\": {\n    \"id\": 1,\n    \"email\": \"anna@example.com\",\n    \"timezone\": \"Europe/Moscow\",\n    \"locale\": \"ru\",\n    \"telegram\": null\n  },\n  \"accessToken\": \"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxIiwidHlwIjoiYWNjZXNzIiwicm9sZXMiOlsiVVNFUiJdfQ.AuR4-example-signature-0010\",\n  \"refreshToken\": \"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxIiwidHlwIjoicmVmcmVzaCJ9.Rf7-example-signature-0011\"\n}"
+						},
+						{
+							"name": "401 — повторное использование refresh-токена",
+							"originalRequest": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n  \"refreshToken\": \"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxIiwidHlwIjoicmVmcmVzaCJ9.Rf7-example-signature-0002\"\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": "{{baseUrl}}/api/v1/auth/refresh"
+							},
+							"status": "Unauthorized",
+							"code": 401,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Content-Type",
+									"value": "application/problem+json"
+								}
+							],
+							"cookie": [],
+							"body": "{\n  \"type\": \"https://aura.example.com/problems/refresh-token-reuse\",\n  \"title\": \"Unauthorized\",\n  \"status\": 401,\n  \"detail\": \"Обнаружено повторное использование refresh-токена; все сессии отозваны\",\n  \"instance\": \"/api/v1/auth/refresh\",\n  \"code\": \"REFRESH_TOKEN_REUSE\"\n}"
+						}
+					]
+				},
+				{
+					"name": "Logout",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"refreshToken\": \"{{refreshToken}}\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": "{{baseUrl}}/api/v1/auth/logout",
+						"description": "Отзывает refresh-токен. 204, идемпотентно.\nПосле logout refresh с этим токеном вернёт 401 REFRESH_TOKEN_REUSE."
+					},
+					"response": [
+						{
+							"name": "204 — токен отозван",
+							"originalRequest": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n  \"refreshToken\": \"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxIiwidHlwIjoicmVmcmVzaCJ9.Rf7-example-signature-0011\"\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": "{{baseUrl}}/api/v1/auth/logout"
+							},
+							"status": "No Content",
+							"code": 204,
+							"_postman_previewlanguage": "text",
+							"header": [],
+							"cookie": []
+						}
+					]
+				},
+				{
+					"name": "Telegram link-code",
+					"request": {
+						"method": "POST",
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{accessToken}}",
+									"type": "string"
+								}
+							]
+						},
+						"url": "{{baseUrl}}/api/v1/auth/telegram/link-code",
+						"description": "Одноразовый код на 10 минут для привязки аккаунта в боте.\n201 — **скрипт сохраняет telegramLinkCode**; 409 — аккаунт уже связан."
+					},
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"if (pm.response.code === 201) {",
+									"    pm.collectionVariables.set('telegramLinkCode', pm.response.json().code);",
+									"}"
+								]
+							}
+						}
+					],
+					"response": [
+						{
+							"name": "201 — код выдан",
+							"originalRequest": {
+								"method": "POST",
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{accessToken}}",
+											"type": "string"
+										}
+									]
+								},
+								"url": "{{baseUrl}}/api/v1/auth/telegram/link-code"
+							},
+							"status": "Created",
+							"code": 201,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Content-Type",
+									"value": "application/json"
+								}
+							],
+							"cookie": [],
+							"body": "{\n  \"code\": \"A2B7KD9M\",\n  \"expiresAt\": \"2026-10-03T18:47:12Z\"\n}"
+						},
+						{
+							"name": "409 — аккаунт уже связан",
+							"originalRequest": {
+								"method": "POST",
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{accessToken}}",
+											"type": "string"
+										}
+									]
+								},
+								"url": "{{baseUrl}}/api/v1/auth/telegram/link-code"
+							},
+							"status": "Conflict",
+							"code": 409,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Content-Type",
+									"value": "application/problem+json"
+								}
+							],
+							"cookie": [],
+							"body": "{\n  \"type\": \"https://aura.example.com/problems/telegram-already-linked\",\n  \"title\": \"Conflict\",\n  \"status\": 409,\n  \"detail\": \"Telegram-аккаунт уже привязан\",\n  \"instance\": \"/api/v1/auth/telegram/link-code\",\n  \"code\": \"TELEGRAM_ALREADY_LINKED\"\n}"
+						}
+					]
+				}
+			]
+		},
+		{
+			"name": "Me",
+			"description": "Профиль текущего пользователя. Везде нужен пользовательский access-токен.",
+			"item": [
+				{
+					"name": "Get me",
+					"request": {
+						"method": "GET",
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{accessToken}}",
+									"type": "string"
+								}
+							]
+						},
+						"url": "{{baseUrl}}/api/v1/me",
+						"description": "Профиль: id, email, timezone, locale, telegram (после привязки).\n401 — нет/просрочен токен."
+					},
+					"response": [
+						{
+							"name": "200 — до привязки Telegram",
+							"originalRequest": {
+								"method": "GET",
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{accessToken}}",
+											"type": "string"
+										}
+									]
+								},
+								"url": "{{baseUrl}}/api/v1/me"
+							},
+							"status": "OK",
+							"code": 200,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Content-Type",
+									"value": "application/json"
+								}
+							],
+							"cookie": [],
+							"body": "{\n  \"id\": 1,\n  \"email\": \"anna@example.com\",\n  \"timezone\": \"Europe/Moscow\",\n  \"locale\": \"ru\",\n  \"telegram\": null\n}"
+						},
+						{
+							"name": "200 — после привязки Telegram",
+							"originalRequest": {
+								"method": "GET",
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{accessToken}}",
+											"type": "string"
+										}
+									]
+								},
+								"url": "{{baseUrl}}/api/v1/me"
+							},
+							"status": "OK",
+							"code": 200,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Content-Type",
+									"value": "application/json"
+								}
+							],
+							"cookie": [],
+							"body": "{\n  \"id\": 1,\n  \"email\": \"anna@example.com\",\n  \"timezone\": \"Europe/Moscow\",\n  \"locale\": \"ru\",\n  \"telegram\": {\n    \"userId\": \"900168\",\n    \"username\": \"aura_tester\"\n  }\n}"
+						},
+						{
+							"name": "401 — нет токена",
+							"originalRequest": {
+								"method": "GET",
+								"url": "{{baseUrl}}/api/v1/me"
+							},
+							"status": "Unauthorized",
+							"code": 401,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Content-Type",
+									"value": "application/problem+json"
+								}
+							],
+							"cookie": [],
+							"body": "{\n  \"type\": \"https://aura.example.com/problems/unauthorized\",\n  \"title\": \"Unauthorized\",\n  \"status\": 401,\n  \"detail\": \"Требуется аутентификация\",\n  \"instance\": \"/api/v1/me\",\n  \"code\": \"UNAUTHORIZED\"\n}"
+						}
+					]
+				},
+				{
+					"name": "Patch me",
+					"request": {
+						"method": "PATCH",
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{accessToken}}",
+									"type": "string"
+								}
+							]
+						},
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"timezone\": \"Europe/Moscow\",\n  \"locale\": \"ru\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": "{{baseUrl}}/api/v1/me",
+						"description": "Частичное обновление профиля: отсутствующие поля не меняются.\n422 — неизвестная таймзона/локаль."
+					},
+					"response": [
+						{
+							"name": "200 — профиль обновлён",
+							"originalRequest": {
+								"method": "PATCH",
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{accessToken}}",
+											"type": "string"
+										}
+									]
+								},
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n  \"timezone\": \"Europe/Moscow\",\n  \"locale\": \"ru\"\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": "{{baseUrl}}/api/v1/me"
+							},
+							"status": "OK",
+							"code": 200,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Content-Type",
+									"value": "application/json"
+								}
+							],
+							"cookie": [],
+							"body": "{\n  \"id\": 1,\n  \"email\": \"anna@example.com\",\n  \"timezone\": \"Europe/Moscow\",\n  \"locale\": \"ru\",\n  \"telegram\": null\n}"
+						},
+						{
+							"name": "422 — неизвестная таймзона",
+							"originalRequest": {
+								"method": "PATCH",
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{accessToken}}",
+											"type": "string"
+										}
+									]
+								},
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n  \"timezone\": \"Mars/Olympus\"\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": "{{baseUrl}}/api/v1/me"
+							},
+							"status": "Unprocessable Entity",
+							"code": 422,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Content-Type",
+									"value": "application/problem+json"
+								}
+							],
+							"cookie": [],
+							"body": "{\n  \"type\": \"https://aura.example.com/problems/validation-failed\",\n  \"title\": \"Unprocessable Entity\",\n  \"status\": 422,\n  \"detail\": \"Некоторые поля некорректны\",\n  \"instance\": \"/api/v1/me\",\n  \"code\": \"VALIDATION_FAILED\",\n  \"errors\": [\n    {\n      \"field\": \"timezone\",\n      \"message\": \"Неизвестная IANA-таймзона: Mars/Olympus\"\n    }\n  ]\n}"
+						}
+					]
+				},
+				{
+					"name": "Change password",
+					"request": {
+						"method": "PUT",
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{accessToken}}",
+									"type": "string"
+								}
+							]
+						},
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"currentPassword\": \"{{password}}\",\n  \"newPassword\": \"{{newPassword}}\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": "{{baseUrl}}/api/v1/me/password",
+						"description": "Смена пароля. 204 — успех; 422 — неверный текущий пароль.\nПосле смены не забудьте обновить переменную `password`, иначе Login перестанет работать."
+					},
+					"response": [
+						{
+							"name": "204 — пароль изменён",
+							"originalRequest": {
+								"method": "PUT",
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{accessToken}}",
+											"type": "string"
+										}
+									]
+								},
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n  \"currentPassword\": \"secret-password-1\",\n  \"newPassword\": \"changed-secret-1\"\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": "{{baseUrl}}/api/v1/me/password"
+							},
+							"status": "No Content",
+							"code": 204,
+							"_postman_previewlanguage": "text",
+							"header": [],
+							"cookie": []
+						},
+						{
+							"name": "422 — неверный текущий пароль",
+							"originalRequest": {
+								"method": "PUT",
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{accessToken}}",
+											"type": "string"
+										}
+									]
+								},
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n  \"currentPassword\": \"wrong-password\",\n  \"newPassword\": \"changed-secret-1\"\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": "{{baseUrl}}/api/v1/me/password"
+							},
+							"status": "Unprocessable Entity",
+							"code": 422,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Content-Type",
+									"value": "application/problem+json"
+								}
+							],
+							"cookie": [],
+							"body": "{\n  \"type\": \"https://aura.example.com/problems/validation-failed\",\n  \"title\": \"Unprocessable Entity\",\n  \"status\": 422,\n  \"detail\": \"Некоторые поля некорректны\",\n  \"instance\": \"/api/v1/me/password\",\n  \"code\": \"VALIDATION_FAILED\",\n  \"errors\": [\n    {\n      \"field\": \"currentPassword\",\n      \"message\": \"Неверный текущий пароль\"\n    }\n  ]\n}"
+						}
+					]
+				}
+			]
+		},
+		{
+			"name": "Internal (бот)",
+			"description": "Внутренний контур Telegram-бота. Начинается с Service token; дальше — сервисный JWT.\nДев-креды: clientId=aura-telegram-bot, clientSecret=aura-bot-dev-secret (seed-чейнджлог).",
+			"item": [
+				{
+					"name": "Service token",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"clientId\": \"aura-telegram-bot\",\n  \"clientSecret\": \"aura-bot-dev-secret\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": "{{baseUrl}}/internal/v1/auth/service-token",
+						"description": "Сервисный JWT (typ=service, scope=internal), доступ к /internal/**.\n401 INVALID_CLIENT_CREDENTIALS — неверные креды.\n**Скрипт сохраняет serviceToken.**"
+					},
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"if (pm.response.code === 200) {",
+									"    pm.collectionVariables.set('serviceToken', pm.response.json().accessToken);",
+									"}"
+								]
+							}
+						}
+					],
+					"response": [
+						{
+							"name": "200 — сервисный JWT",
+							"originalRequest": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n  \"clientId\": \"aura-telegram-bot\",\n  \"clientSecret\": \"aura-bot-dev-secret\"\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": "{{baseUrl}}/internal/v1/auth/service-token"
+							},
+							"status": "OK",
+							"code": 200,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Content-Type",
+									"value": "application/json"
+								}
+							],
+							"cookie": [],
+							"body": "{\n  \"accessToken\": \"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJhdXJhLXRlbGVncmFtLWJvdCIsInR5cCI6InNlcnZpY2UiLCJzY29wZSI6ImludGVybmFsIn0.Svc-example-signature-0003\",\n  \"expiresIn\": 86399\n}"
+						},
+						{
+							"name": "401 — неверные креды",
+							"originalRequest": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n  \"clientId\": \"aura-telegram-bot\",\n  \"clientSecret\": \"wrong-secret\"\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": "{{baseUrl}}/internal/v1/auth/service-token"
+							},
+							"status": "Unauthorized",
+							"code": 401,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Content-Type",
+									"value": "application/problem+json"
+								}
+							],
+							"cookie": [],
+							"body": "{\n  \"type\": \"https://aura.example.com/problems/invalid-client-credentials\",\n  \"title\": \"Unauthorized\",\n  \"status\": 401,\n  \"detail\": \"Неверный clientId или clientSecret\",\n  \"instance\": \"/internal/v1/auth/service-token\",\n  \"code\": \"INVALID_CLIENT_CREDENTIALS\"\n}"
+						}
+					]
+				},
+				{
+					"name": "Telegram link",
+					"request": {
+						"method": "POST",
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{serviceToken}}",
+									"type": "string"
+								}
+							]
+						},
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"code\": \"{{telegramLinkCode}}\",\n  \"telegramUserId\": \"{{telegramUserId}}\",\n  \"username\": \"{{telegramUsername}}\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": "{{baseUrl}}/internal/v1/auth/telegram/link",
+						"description": "Привязка Telegram-аккаунта по коду из Telegram link-code.\n204 — успех; 404 — код не найден/истёк; 409 — аккаунт уже связан.\nПосле связки GET /me покажет telegram."
+					},
+					"response": [
+						{
+							"name": "204 — аккаунт привязан",
+							"originalRequest": {
+								"method": "POST",
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{serviceToken}}",
+											"type": "string"
+										}
+									]
+								},
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n  \"code\": \"A2B7KD9M\",\n  \"telegramUserId\": \"900168\",\n  \"username\": \"aura_tester\"\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": "{{baseUrl}}/internal/v1/auth/telegram/link"
+							},
+							"status": "No Content",
+							"code": 204,
+							"_postman_previewlanguage": "text",
+							"header": [],
+							"cookie": []
+						},
+						{
+							"name": "404 — код не найден или истёк",
+							"originalRequest": {
+								"method": "POST",
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{serviceToken}}",
+											"type": "string"
+										}
+									]
+								},
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n  \"code\": \"A2B7KD9M\",\n  \"telegramUserId\": \"900168\",\n  \"username\": \"aura_tester\"\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": "{{baseUrl}}/internal/v1/auth/telegram/link"
+							},
+							"status": "Not Found",
+							"code": 404,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Content-Type",
+									"value": "application/problem+json"
+								}
+							],
+							"cookie": [],
+							"body": "{\n  \"type\": \"https://aura.example.com/problems/telegram-link-code-not-found\",\n  \"title\": \"Not Found\",\n  \"status\": 404,\n  \"detail\": \"Код связки не найден или истёк\",\n  \"instance\": \"/internal/v1/auth/telegram/link\",\n  \"code\": \"TELEGRAM_LINK_CODE_NOT_FOUND\"\n}"
+						},
+						{
+							"name": "409 — Telegram уже привязан",
+							"originalRequest": {
+								"method": "POST",
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{serviceToken}}",
+											"type": "string"
+										}
+									]
+								},
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n  \"code\": \"A2B7KD9M\",\n  \"telegramUserId\": \"900168\",\n  \"username\": \"aura_tester\"\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": "{{baseUrl}}/internal/v1/auth/telegram/link"
+							},
+							"status": "Conflict",
+							"code": 409,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Content-Type",
+									"value": "application/problem+json"
+								}
+							],
+							"cookie": [],
+							"body": "{\n  \"type\": \"https://aura.example.com/problems/telegram-already-linked\",\n  \"title\": \"Conflict\",\n  \"status\": 409,\n  \"detail\": \"Telegram-аккаунт уже привязан\",\n  \"instance\": \"/internal/v1/auth/telegram/link\",\n  \"code\": \"TELEGRAM_ALREADY_LINKED\"\n}"
+						},
+						{
+							"name": "401 — нет сервисного токена",
+							"originalRequest": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n  \"code\": \"A2B7KD9M\",\n  \"telegramUserId\": \"900168\",\n  \"username\": \"aura_tester\"\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": "{{baseUrl}}/internal/v1/auth/telegram/link"
+							},
+							"status": "Unauthorized",
+							"code": 401,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Content-Type",
+									"value": "application/problem+json"
+								}
+							],
+							"cookie": [],
+							"body": "{\n  \"type\": \"https://aura.example.com/problems/unauthorized\",\n  \"title\": \"Unauthorized\",\n  \"status\": 401,\n  \"detail\": \"Требуется аутентификация\",\n  \"instance\": \"/internal/v1/auth/telegram/link\",\n  \"code\": \"UNAUTHORIZED\"\n}"
+						}
+					]
+				},
+				{
+					"name": "Telegram exchange",
+					"request": {
+						"method": "POST",
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{serviceToken}}",
+									"type": "string"
+								}
+							]
+						},
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"telegramUserId\": \"{{telegramUserId}}\",\n  \"username\": \"{{telegramUsername}}\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": "{{baseUrl}}/internal/v1/auth/telegram/exchange",
+						"description": "Краткоживущий (15 мин) пользовательский access-токен для действий бота от имени пользователя.\n404 — аккаунт не привязан.\n**Скрипт сохраняет botAccessToken** — им можно вручную ходить в /api/v1/** (например, подставить в Get me)."
+					},
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"if (pm.response.code === 200) {",
+									"    pm.collectionVariables.set('botAccessToken', pm.response.json().accessToken);",
+									"}"
+								]
+							}
+						}
+					],
+					"response": [
+						{
+							"name": "200 — пользовательский токен",
+							"originalRequest": {
+								"method": "POST",
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{serviceToken}}",
+											"type": "string"
+										}
+									]
+								},
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n  \"telegramUserId\": \"900168\",\n  \"username\": \"aura_tester\"\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": "{{baseUrl}}/internal/v1/auth/telegram/exchange"
+							},
+							"status": "OK",
+							"code": 200,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Content-Type",
+									"value": "application/json"
+								}
+							],
+							"cookie": [],
+							"body": "{\n  \"accessToken\": \"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxIiwidHlwIjoiYWNjZXNzIiwicm9sZXMiOlsiVVNFUiJdfQ.AuR4-example-signature-0001\",\n  \"expiresIn\": 900\n}"
+						},
+						{
+							"name": "404 — аккаунт не привязан",
+							"originalRequest": {
+								"method": "POST",
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{serviceToken}}",
+											"type": "string"
+										}
+									]
+								},
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n  \"telegramUserId\": \"900168\",\n  \"username\": \"aura_tester\"\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": "{{baseUrl}}/internal/v1/auth/telegram/exchange"
+							},
+							"status": "Not Found",
+							"code": 404,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Content-Type",
+									"value": "application/problem+json"
+								}
+							],
+							"cookie": [],
+							"body": "{\n  \"type\": \"https://aura.example.com/problems/not-found\",\n  \"title\": \"Not Found\",\n  \"status\": 404,\n  \"detail\": \"Telegram-аккаунт не привязан к профилю\",\n  \"instance\": \"/internal/v1/auth/telegram/exchange\",\n  \"code\": \"NOT_FOUND\"\n}"
+						}
+					]
+				}
+			]
+		}
+	]
+}

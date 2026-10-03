@@ -14,3 +14,49 @@ me:
               $ref: '../components/schemas/me.yaml#/MeResponse'
       '401':
         $ref: '../components/responses.yaml#/Unauthorized'
+  patch:
+    tags:
+      - me
+    operationId: patchMe
+    summary: Обновление профиля
+    description: Частичное обновление настроек профиля. Отсутствующие поля не изменяются.
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '../components/schemas/auth.yaml#/UpdateMeRequest'
+    responses:
+      '200':
+        description: Обновлённый профиль
+        content:
+          application/json:
+            schema:
+              $ref: '../components/schemas/me.yaml#/MeResponse'
+      '401':
+        $ref: '../components/responses.yaml#/Unauthorized'
+      '422':
+        $ref: '../components/responses.yaml#/ValidationFailed'
+
+mePassword:
+  put:
+    tags:
+      - me
+    operationId: changePassword
+    summary: Смена пароля
+    description: >
+      Меняет пароль, проверяя текущий. Неверный текущий пароль — 422
+      (code=VALIDATION_FAILED, errors=[{field: "currentPassword"}]).
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '../components/schemas/auth.yaml#/ChangePasswordRequest'
+    responses:
+      '204':
+        description: Пароль изменён
+      '401':
+        $ref: '../components/responses.yaml#/Unauthorized'
+      '422':
+        $ref: '../components/responses.yaml#/ValidationFailed'

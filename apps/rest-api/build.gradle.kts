@@ -17,16 +17,31 @@ dependencies {
 
     implementation(libs.bundles.spring.app)
     implementation(libs.spring.boot.starter.validation)
+    // Доменные события Spring Modulith (in-process) + модульная структура
+    implementation(libs.spring.modulith.starter.core)
 
     runtimeOnly(libs.liquibase.core)
     // Boot 4: авто-конфигурация Liquibase вынесена в отдельный модуль (см. docs/liquibase-migrations.md)
     runtimeOnly("org.springframework.boot:spring-boot-liquibase")
     runtimeOnly(libs.postgresql)
+    // Spring Data + Kotlin: интроспекция сущностей требует kotlin-reflect в runtime
+    runtimeOnly(libs.kotlin.reflect)
     // Swagger UI (статическая страница docs/index.html читает спеку из /openapi/api.yaml)
     runtimeOnly(libs.swagger.ui)
 
     testImplementation(libs.bundles.spring.tests)
     testImplementation(libs.bundles.mockk)
+    testImplementation(libs.spring.security.test)
+    testImplementation(libs.spring.boot.security.test)
+    // Slice-тесты контроллеров: @WebMvcTest + MockMvc (Boot 4 — модульный стартер)
+    testImplementation(libs.spring.boot.starter.webmvc.test)
+    // Проверка архитектурных правил (слои, границы модулей)
+    testImplementation(libs.archunit.junit5)
+    // Интеграционные тесты на Testcontainers (настоящий Postgres, см. docs/local-dev.md)
+    testImplementation(libs.spring.boot.testcontainers)
+    testImplementation(libs.spring.boot.resttestclient)
+    testImplementation(libs.testcontainers.postgresql)
+    testImplementation(libs.testcontainers.junit.jupiter)
 }
 
 // Генерация серверных интерфейсов + DTO из OpenAPI-спеки (см. docs/spec-first-workflow.md).
@@ -48,6 +63,8 @@ val generateApi = tasks.register<org.openapitools.generator.gradle.plugin.tasks.
         "documentationProvider" to "none",
         "useBeanValidation" to "true",
         "enumPropertyNaming" to "UPPERCASE",
+        // Отдельный интерфейс на каждый тег спеки: AuthApi, MeApi, InternalApi
+        "useTags" to "true",
     )
 }
 

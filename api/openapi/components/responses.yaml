@@ -1,5 +1,33 @@
 Unauthorized:
-  description: Нет или просрочен токен доступа
+  description: Нет или просрочен токен доступа, недействительные креды
+  content:
+    application/problem+json:
+      schema:
+        $ref: './schemas/common.yaml#/Problem'
+
+BadRequest:
+  description: Некорректный синтаксис запроса
+  content:
+    application/problem+json:
+      schema:
+        $ref: './schemas/common.yaml#/Problem'
+
+NotFound:
+  description: Ресурс не найден (в том числе чужой — существование не раскрывается)
+  content:
+    application/problem+json:
+      schema:
+        $ref: './schemas/common.yaml#/Problem'
+
+Conflict:
+  description: Конфликт состояния (например, email уже занят или аккаунт уже связан)
+  content:
+    application/problem+json:
+      schema:
+        $ref: './schemas/common.yaml#/Problem'
+
+ValidationFailed:
+  description: Бизнес-валидация не пройдена (code=VALIDATION_FAILED)
   content:
     application/problem+json:
       schema:

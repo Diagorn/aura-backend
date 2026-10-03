@@ -1,0 +1,45 @@
+databaseChangeLog:
+  - changeSet:
+      id: auth-002-create-refresh-tokens
+      author: Diagorn
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+            - tableExists:
+                schemaName: auth
+                tableName: refresh_tokens
+      changes:
+        - createTable:
+            schemaName: auth
+            tableName: refresh_tokens
+            columns:
+              - column: { name: id, type: bigint, autoIncrement: true, constraints: { primaryKey: true, primaryKeyName: pk_refresh_tokens } }
+              - column: { name: user_id, type: bigint, constraints: { nullable: false } }
+              - column: { name: token_hash, type: varchar(64), constraints: { nullable: false } }
+              - column: { name: expires_at, type: timestamptz, constraints: { nullable: false } }
+              - column: { name: revoked_at, type: timestamptz }
+              - column: { name: created_at, type: timestamptz, defaultValueComputed: now(), constraints: { nullable: false } }
+        - addUniqueConstraint:
+            schemaName: auth
+            tableName: refresh_tokens
+            columnNames: token_hash
+            constraintName: uq_refresh_tokens_token_hash
+        - addForeignKeyConstraint:
+            baseTableSchemaName: auth
+            baseTableName: refresh_tokens
+            baseColumnNames: user_id
+            referencedTableSchemaName: auth
+            referencedTableName: users
+            referencedColumnNames: id
+            constraintName: fk_refresh_tokens_user
+            onDelete: CASCADE
+        - createIndex:
+            schemaName: auth
+            indexName: idx_refresh_tokens_user
+            tableName: refresh_tokens
+            columns:
+              - column: { name: user_id }
+      rollback:
+        - dropTable:
+            schemaName: auth
+            tableName: refresh_tokens

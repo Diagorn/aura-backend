@@ -9,6 +9,9 @@ complexity:
     thresholdInFiles: 20
     thresholdInClasses: 20
     thresholdInInterfaces: 12
+  LongParameterList:
+    # JPA-сущности с primary-конструкторами — легитимно широкие
+    constructorThreshold: 10
 
 style:
   MaxLineLength:

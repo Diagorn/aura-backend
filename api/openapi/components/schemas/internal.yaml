@@ -1,0 +1,73 @@
+ServiceTokenRequest:
+  type: object
+  required:
+    - clientId
+    - clientSecret
+  properties:
+    clientId:
+      type: string
+      maxLength: 64
+    clientSecret:
+      type: string
+      format: password
+      maxLength: 128
+
+ServiceTokenResponse:
+  type: object
+  required:
+    - accessToken
+    - expiresIn
+  properties:
+    accessToken:
+      type: string
+      description: Сервисный JWT (typ=service, scope=internal)
+    expiresIn:
+      type: integer
+      format: int64
+      description: Срок жизни токена в секундах
+
+TelegramLinkRequest:
+  type: object
+  required:
+    - code
+    - telegramUserId
+  properties:
+    code:
+      type: string
+      maxLength: 64
+      description: Одноразовый код из POST /api/v1/auth/telegram/link-code
+    telegramUserId:
+      type: string
+      maxLength: 64
+      description: ID пользователя в Telegram (= chat_id в личном чате)
+    username:
+      type: string
+      maxLength: 255
+      description: Имя пользователя в Telegram (@username), может отсутствовать
+
+TelegramExchangeRequest:
+  type: object
+  required:
+    - telegramUserId
+  properties:
+    telegramUserId:
+      type: string
+      maxLength: 64
+    username:
+      type: string
+      maxLength: 255
+      description: Свежий username; core обновляет его в профиле
+
+TelegramExchangeResponse:
+  type: object
+  required:
+    - accessToken
+    - expiresIn
+  properties:
+    accessToken:
+      type: string
+      description: Пользовательский JWT access-токен (15 минут)
+    expiresIn:
+      type: integer
+      format: int64
+      description: Срок жизни токена в секундах
