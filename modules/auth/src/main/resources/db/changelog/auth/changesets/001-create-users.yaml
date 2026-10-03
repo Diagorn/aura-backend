@@ -1,0 +1,38 @@
+databaseChangeLog:
+  - changeSet:
+      id: auth-001-create-users
+      author: Diagorn
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+            - tableExists:
+                schemaName: auth
+                tableName: users
+      changes:
+        - createTable:
+            schemaName: auth
+            tableName: users
+            columns:
+              - column: { name: id, type: bigint, autoIncrement: true, constraints: { primaryKey: true, primaryKeyName: pk_users } }
+              - column: { name: email, type: varchar(255), constraints: { nullable: false } }
+              - column: { name: password_hash, type: varchar(255), constraints: { nullable: false } }
+              - column: { name: role, type: varchar(16), defaultValue: 'USER', constraints: { nullable: false } }
+              - column: { name: telegram_id, type: varchar(64) }
+              - column: { name: telegram_username, type: varchar(255) }
+              - column: { name: timezone, type: varchar(64), defaultValue: 'Europe/Moscow', constraints: { nullable: false } }
+              - column: { name: locale, type: varchar(16), defaultValue: 'ru', constraints: { nullable: false } }
+              - column: { name: created_at, type: timestamptz, defaultValueComputed: now(), constraints: { nullable: false } }
+        - addUniqueConstraint:
+            schemaName: auth
+            tableName: users
+            columnNames: email
+            constraintName: uq_users_email
+        - addUniqueConstraint:
+            schemaName: auth
+            tableName: users
+            columnNames: telegram_id
+            constraintName: uq_users_telegram_id
+      rollback:
+        - dropTable:
+            schemaName: auth
+            tableName: users

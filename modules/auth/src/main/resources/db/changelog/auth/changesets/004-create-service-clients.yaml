@@ -1,0 +1,29 @@
+databaseChangeLog:
+  - changeSet:
+      id: auth-004-create-service-clients
+      author: Diagorn
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+            - tableExists:
+                schemaName: auth
+                tableName: service_clients
+      changes:
+        - createTable:
+            schemaName: auth
+            tableName: service_clients
+            columns:
+              - column: { name: id, type: bigint, autoIncrement: true, constraints: { primaryKey: true, primaryKeyName: pk_service_clients } }
+              - column: { name: client_id, type: varchar(64), constraints: { nullable: false } }
+              - column: { name: client_secret_hash, type: varchar(64), constraints: { nullable: false } }
+              - column: { name: description, type: varchar(255), constraints: { nullable: false } }
+              - column: { name: created_at, type: timestamptz, defaultValueComputed: now(), constraints: { nullable: false } }
+        - addUniqueConstraint:
+            schemaName: auth
+            tableName: service_clients
+            columnNames: client_id
+            constraintName: uq_service_clients_client_id
+      rollback:
+        - dropTable:
+            schemaName: auth
+            tableName: service_clients

@@ -1,0 +1,22 @@
+# Seed доверенных клиентов внутреннего контура (context: seed).
+# Dev-креды Telegram-бота: clientId=aura-telegram-bot, clientSecret=aura-bot-dev-secret
+# (см. docs/local-dev.md). Секрет хранится как SHA-256 hex; для прода креды
+# переносятся в выделенный (не seed) чейнджлог окружения с боевым значением.
+databaseChangeLog:
+  - changeSet:
+      id: auth-900-seed-service-clients
+      author: Diagorn
+      context: seed
+      preConditions:
+        - onFail: MARK_RAN
+        - sqlCheck:
+            expectedResult: 0
+            sql: SELECT COUNT(*) FROM auth.service_clients WHERE client_id = 'aura-telegram-bot'
+      changes:
+        - insert:
+            schemaName: auth
+            tableName: service_clients
+            columns:
+              - column: { name: client_id, value: 'aura-telegram-bot' }
+              - column: { name: client_secret_hash, value: '035c0294ac0d730f795ed4d3aeddd5ceb457935e991d54296b46d47f77e44a1a' }
+              - column: { name: description, value: 'Telegram bot (aura-telegram-bot), dev seed' }

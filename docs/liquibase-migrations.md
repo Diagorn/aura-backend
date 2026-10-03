@@ -9,14 +9,17 @@
 ```
 modules/
 ├── auth/src/main/resources/db/changelog/auth/
-│   ├── changelog.yaml            # includes всех changesets модуля
-│   ├── 001-create-users.yaml
-│   ├── 002-create-refresh-tokens.yaml
-│   └── 003-create-telegram-link-codes.yaml
+│   ├── changelog.yaml            # includeAll всех changesets модуля (см. ниже)
+│   └── changesets/
+│       ├── 000-create-schema.yaml
+│       ├── 001-create-users.yaml
+│       ├── 002-create-refresh-tokens.yaml
+│       ├── 003-create-telegram-link-codes.yaml
+│       ├── 004-create-service-clients.yaml
+│       └── 900-seed-service-clients.yaml   # context: seed
 ├── catalog/src/main/resources/db/changelog/catalog/
 │   ├── changelog.yaml
-│   ├── 001-create-catalog-tables.yaml
-│   └── 900-seed-presets.yaml     # context: seed
+│   └── changesets/…
 ├── entry/src/main/resources/db/changelog/entry/...
 ├── note/src/main/resources/db/changelog/note/...
 └── notification/src/main/resources/db/changelog/notification/...
@@ -41,15 +44,15 @@ databaseChangeLog:
       file: classpath:db/changelog/notification/changelog.yaml
 ```
 
-Модульный `changelog.yaml`:
+Модульный `changelog.yaml` подключает **все файлы подпапки `changesets/`** через `includeAll` — новые changesets подхватываются без правки списка:
 
 ```yaml
 databaseChangeLog:
-  - include:
-      file: classpath:db/changelog/auth/000-create-schema.yaml
+  - includeAll:
+      path: db/changelog/auth/changesets/
 ```
 
-Порядок явный (не `includeAll`), чтобы зависимости по данным (seed каталога до seed настроек) были предсказуемы.
+Порядок внутри `includeAll` — алфавитный по имени файла, поэтому номер в имени обязателен и кодирует порядок применения (`000-create-schema.yaml`, `001-…`, `900-seed-…`). Сам `changelog.yaml` лежит вне `changesets/`, чтобы не зациклить `includeAll`; зависимости по данным (seed каталога до seed настроек) кодируются номерами файлов.
 
 ## Конфигурация (apps/rest-api)
 

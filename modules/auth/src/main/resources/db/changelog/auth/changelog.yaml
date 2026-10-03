@@ -1,3 +1,5 @@
 ﻿databaseChangeLog:
-  - include:
-      file: classpath:db/changelog/auth/000-create-schema.yaml
+  # Все changesets модуля из подпапки; порядок — алфавитный,
+  # поэтому номер в имени файла кодирует порядок применения
+  - includeAll:
+      path: db/changelog/auth/changesets/

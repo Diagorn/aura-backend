@@ -66,7 +66,7 @@ docker compose up -d
 
 > Профиль `local` активен **по умолчанию** (`spring.profiles.default` в `application.yml`) — запуск из IDE или `java -jar` работает без дополнительной настройки. Прод-окружение обязано задавать `SPRING_PROFILES_ACTIVE` явно.
 
-> На этапе каркаса security настроен минимально: `/actuator/health` открыт, всё остальное отвечает `401` (JWT-аутентификация — этап 1, см. [roadmap.md](roadmap.md)).
+> Аутентификация — JWT (HS256): `/api/v1/auth/register|login|refresh|logout` открыты, всё остальное под `/api/v1/**` требует `Authorization: Bearer <accessToken>`, внутренние маршруты `/internal/v1/**` — сервисный JWT (`typ=service`). Сваггер-ручки — см. `/docs/index.html` (спека — `/openapi/api.yaml`).
 
 - Swagger UI: <http://localhost:8080/docs/index.html> (корень `/` — редирект на него; спека — <http://localhost:8080/openapi/api.yaml>).
 - Порты: `8080` — API, `5432` — Postgres, `6379` — Redis (`8081` — actuator бота из его репозитория).
@@ -77,9 +77,17 @@ docker compose up -d
 |---|---|
 | `SPRING_DATASOURCE_URL` | `jdbc:postgresql://localhost:5432/aura` |
 | `SPRING_DATASOURCE_USERNAME` / `_PASSWORD` | `aura` / `aura` |
-| `JWT_SECRET` | ≥ 32 символов, для dev — любое значение из `.env` |
+| `JWT_SECRET` | в local — dev-значение из `application-local.yml` (≥ 32 байт); в проде задаётся всегда |
 | `REDIS_HOST` / `REDIS_PORT` | `localhost` / `6379` |
-| `CORE_CLIENT_ID` / `CORE_CLIENT_SECRET` | креды бота, инициализируются seed-чейнджлогом |
+
+## Сервисные креды Telegram-бота (`/internal`)
+
+Инициализируются seed-чейнджлогом (`auth-900-seed-service-clients`, context `seed`):
+
+- `CORE_CLIENT_ID` = `aura-telegram-bot`
+- `CORE_CLIENT_SECRET` = `aura-bot-dev-secret` (в БД — только SHA-256 хэш)
+
+Обмен на сервисный JWT: `POST /internal/v1/auth/service-token {clientId, clientSecret}`. Для прода креды переносятся в выделенный (не seed) чейнджлог окружения с секретом из хранилища секретов.
 
 ## Тесты и качество
 

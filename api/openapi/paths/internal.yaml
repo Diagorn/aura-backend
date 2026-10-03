@@ -1,0 +1,84 @@
+serviceToken:
+  post:
+    tags:
+      - internal
+    operationId: createServiceToken
+    summary: Сервисный JWT для бота
+    description: >
+      Обменивает clientId/clientSecret на сервисный JWT (`typ=service`, `scope=internal`).
+      Бот кэширует токен до истечения срока (expiresIn, секунд).
+    security: []
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '../components/schemas/internal.yaml#/ServiceTokenRequest'
+    responses:
+      '200':
+        description: Сервисный токен выдан
+        content:
+          application/json:
+            schema:
+              $ref: '../components/schemas/internal.yaml#/ServiceTokenResponse'
+      '401':
+        $ref: '../components/responses.yaml#/Unauthorized'
+      '422':
+        $ref: '../components/responses.yaml#/ValidationFailed'
+
+telegramLink:
+  post:
+    tags:
+      - internal
+    operationId: linkTelegramAccount
+    summary: Привязка Telegram-аккаунта по коду связки
+    description: >
+      Привязывает пользователя по одноразовому коду из `POST /api/v1/auth/telegram/link-code`.
+      404 — код не найден или истёк; 409 — Telegram-аккаунт уже связан с профилем
+      (этим же или другим пользователем). При успехе — 204 и событие TelegramAccountLinked.
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '../components/schemas/internal.yaml#/TelegramLinkRequest'
+    responses:
+      '204':
+        description: Аккаунт привязан
+      '401':
+        $ref: '../components/responses.yaml#/Unauthorized'
+      '404':
+        $ref: '../components/responses.yaml#/NotFound'
+      '409':
+        $ref: '../components/responses.yaml#/Conflict'
+      '422':
+        $ref: '../components/responses.yaml#/ValidationFailed'
+
+telegramExchange:
+  post:
+    tags:
+      - internal
+    operationId: exchangeTelegramToken
+    summary: Краткоживущий пользовательский токен по Telegram-аккаунту
+    description: >
+      Отдаёт пользовательский access-токен (15 минут) для действий бота от имени пользователя.
+      Свежий username, если передан, сохраняется в профиле. 404 — аккаунт не привязан.
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '../components/schemas/internal.yaml#/TelegramExchangeRequest'
+    responses:
+      '200':
+        description: Пользовательский access-токен
+        content:
+          application/json:
+            schema:
+              $ref: '../components/schemas/internal.yaml#/TelegramExchangeResponse'
+      '401':
+        $ref: '../components/responses.yaml#/Unauthorized'
+      '404':
+        $ref: '../components/responses.yaml#/NotFound'
+      '422':
+        $ref: '../components/responses.yaml#/ValidationFailed'

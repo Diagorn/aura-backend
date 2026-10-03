@@ -7,6 +7,19 @@ spring:
     default: local
   jpa:
     open-in-view: false
+  # Стандартные ситуации MVC (404/405/415 и т.п.) тоже отдаются как problem+json
+  mvc:
+    problemdetails:
+      enabled: true
   liquibase:
     change-log: classpath:db/changelog/master.yaml
     liquibase-schema: liquibase
+
+aura:
+  security:
+    jwt:
+      # HS256-секрет; в проде — только через env (>= 32 байт), RS256 + JWKS — этап hardening
+      secret: ${JWT_SECRET}
+      access-token-ttl: 15m
+      refresh-token-ttl: 30d
+      service-token-ttl: 24h

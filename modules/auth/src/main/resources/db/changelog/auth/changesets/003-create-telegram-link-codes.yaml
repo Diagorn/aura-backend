@@ -1,0 +1,44 @@
+databaseChangeLog:
+  - changeSet:
+      id: auth-003-create-telegram-link-codes
+      author: Diagorn
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+            - tableExists:
+                schemaName: auth
+                tableName: telegram_link_codes
+      changes:
+        - createTable:
+            schemaName: auth
+            tableName: telegram_link_codes
+            columns:
+              - column: { name: id, type: bigint, autoIncrement: true, constraints: { primaryKey: true, primaryKeyName: pk_telegram_link_codes } }
+              - column: { name: user_id, type: bigint, constraints: { nullable: false } }
+              - column: { name: code, type: varchar(64), constraints: { nullable: false } }
+              - column: { name: expires_at, type: timestamptz, constraints: { nullable: false } }
+              - column: { name: created_at, type: timestamptz, defaultValueComputed: now(), constraints: { nullable: false } }
+        - addUniqueConstraint:
+            schemaName: auth
+            tableName: telegram_link_codes
+            columnNames: code
+            constraintName: uq_telegram_link_codes_code
+        - addForeignKeyConstraint:
+            baseTableSchemaName: auth
+            baseTableName: telegram_link_codes
+            baseColumnNames: user_id
+            referencedTableSchemaName: auth
+            referencedTableName: users
+            referencedColumnNames: id
+            constraintName: fk_telegram_link_codes_user
+            onDelete: CASCADE
+        - createIndex:
+            schemaName: auth
+            indexName: idx_telegram_link_codes_user
+            tableName: telegram_link_codes
+            columns:
+              - column: { name: user_id }
+      rollback:
+        - dropTable:
+            schemaName: auth
+            tableName: telegram_link_codes
