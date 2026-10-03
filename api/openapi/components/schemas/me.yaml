@@ -21,6 +21,7 @@ MeResponse:
       type: string
       description: Локаль, например ru
     telegram:
+      type: object
       nullable: true
       allOf:
         - $ref: '#/TelegramProfile'
