@@ -1,0 +1,10 @@
+# Конфиг redocly lint (см. docs/spec-first-workflow.md).
+# CI вызывает: npx @redocly/cli@latest lint --config api/redocly.yaml api/openapi/api.yaml
+extends:
+  - recommended
+
+rules:
+  # Лицензию проекта пока не определяли — добавим info.license вместе с LICENSE-файлом
+  info-license: off
+  # servers: http://localhost:8080 — осознанный dev-сервер по умолчанию
+  no-server-example.com: off

@@ -1,0 +1,13 @@
+# Master-чейнджлог: включает модульные changelog.yaml в фиксированном порядке
+# (см. docs/liquibase-migrations.md). Каждый модуль владеет своими чейнджлогами.
+databaseChangeLog:
+  - include:
+      file: classpath:db/changelog/auth/changelog.yaml
+  - include:
+      file: classpath:db/changelog/catalog/changelog.yaml
+  - include:
+      file: classpath:db/changelog/entry/changelog.yaml
+  - include:
+      file: classpath:db/changelog/note/changelog.yaml
+  - include:
+      file: classpath:db/changelog/notification/changelog.yaml

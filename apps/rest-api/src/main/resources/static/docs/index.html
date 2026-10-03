@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1"/>
+    <title>Aura API — Swagger UI</title>
+    <link rel="stylesheet" href="/webjars/swagger-ui/${swaggerUiVersion}/swagger-ui.css"/>
+</head>
+<body>
+<div id="swagger-ui"></div>
+<script src="/webjars/swagger-ui/${swaggerUiVersion}/swagger-ui-bundle.js" charset="UTF-8"></script>
+<script>
+    window.onload = function () {
+        window.ui = SwaggerUIBundle({
+            // Та же спека, из которой генерируется код сервера (spec-first).
+            url: "/openapi/api.yaml",
+            dom_id: "#swagger-ui",
+            deepLinking: true,
+            filter: true,
+            withCredentials: false
+        });
+    };
+</script>
+</body>
+</html>

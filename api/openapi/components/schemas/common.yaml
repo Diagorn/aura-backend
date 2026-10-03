@@ -1,0 +1,53 @@
+Problem:
+  type: object
+  description: Ошибка по RFC 9457 с расширениями code/errors
+  properties:
+    type:
+      type: string
+      format: uri
+    title:
+      type: string
+    status:
+      type: integer
+      format: int32
+    detail:
+      type: string
+    instance:
+      type: string
+    code:
+      type: string
+      description: Машинный код ошибки, например VALIDATION_FAILED
+    errors:
+      type: array
+      description: Детали валидации
+      items:
+        $ref: '#/ValidationError'
+
+ValidationError:
+  type: object
+  properties:
+    field:
+      type: string
+    message:
+      type: string
+
+PageMetadata:
+  type: object
+  required:
+    - page
+    - size
+    - totalElements
+    - totalPages
+  properties:
+    page:
+      type: integer
+      format: int32
+    size:
+      type: integer
+      format: int32
+    totalElements:
+      type: integer
+      format: int64
+    totalPages:
+      type: integer
+      format: int32

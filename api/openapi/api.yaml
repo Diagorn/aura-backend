@@ -1,0 +1,27 @@
+openapi: 3.0.3
+info:
+  title: Aura API
+  description: |
+    REST API трекера эмоций Aura.
+
+    Конвенции: версия в пути (/api/v1), ошибки — RFC 9457 (application/problem+json),
+    пагинация page/size, периоды выборок — from/to либо period=week|month|half_year|year.
+    Полные правила — docs/api-design.md. Спека — источник истины для сервера, фронтенда и Telegram-бота.
+  version: 1.0.0
+servers:
+  - url: http://localhost:8080
+    description: Локальная разработка
+tags:
+  - name: me
+    description: Профиль текущего пользователя
+security:
+  - bearerAuth: []
+paths:
+  /api/v1/me:
+    $ref: './paths/me.yaml#/me'
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT

@@ -1,0 +1,29 @@
+# Переопределения поверх дефолтного конфига detekt (buildUponDefaultConfig = true).
+build:
+  maxIssues: 0
+
+complexity:
+  LongMethod:
+    threshold: 120
+  TooManyFunctions:
+    thresholdInFiles: 20
+    thresholdInClasses: 20
+    thresholdInInterfaces: 12
+
+style:
+  MaxLineLength:
+    maxLineLength: 140
+  MagicNumber:
+    active: false
+  ReturnCount:
+    active: false
+  UnusedPrivateMember:
+    ignoreAnnotated: ['SpringBootApplication']
+
+performance:
+  SpreadOperator:
+    active: false   # идиома runApplication<Foo>(*args) в Spring Boot
+
+exceptions:
+  TooGenericExceptionCaught:
+    active: false

@@ -60,7 +60,7 @@ Guidance for AI agents working on **Aura** — an emotion-tracking backend with 
 - Keep controllers as adapters and transactions in application services.
 - Use DTOs; do not expose JPA entities as external contracts.
 - Use `tools.jackson` APIs for Jackson customization.
-- Use `@MockitoBean`/`@MockitoSpyBean` and explicit test auto-configuration.
+- Use **MockK** for test doubles: plain `mockk` in unit tests, `@MockkBean` (springmockk) in slice tests. Explicit test auto-configuration. Skill `testing-pyramid` examples use Mockito — translate them to MockK idioms.
 - Preserve error, security, pagination, nullability, and observability contracts.
 - Model optionality with Kotlin nullable types; avoid platform types at API and persistence boundaries.
 

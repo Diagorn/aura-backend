@@ -1,0 +1,12 @@
+databaseChangeLog:
+  - changeSet:
+      id: entry-000-create-schema
+      author: Diagorn
+      preConditions:
+        - onFail: MARK_RAN
+        - sqlCheck:
+            expectedResult: 1
+            sql: SELECT COUNT(*) FROM pg_namespace WHERE nspname = 'entry'
+      changes:
+        - sql:
+            sql: CREATE SCHEMA IF NOT EXISTS entry

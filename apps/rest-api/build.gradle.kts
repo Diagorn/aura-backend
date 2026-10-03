@@ -1,0 +1,83 @@
+plugins {
+    id("aura.spring.app")
+    alias(libs.plugins.openapi.generator)
+}
+
+dependencies {
+    implementation(platform(libs.spring.boot.bom))
+
+    implementation(project(":modules:shared"))
+    implementation(project(":modules:auth"))
+    implementation(project(":modules:user"))
+    implementation(project(":modules:catalog"))
+    implementation(project(":modules:entry"))
+    implementation(project(":modules:note"))
+    implementation(project(":modules:analytics"))
+    implementation(project(":modules:notification"))
+
+    implementation(libs.bundles.spring.app)
+    implementation(libs.spring.boot.starter.validation)
+
+    runtimeOnly(libs.liquibase.core)
+    // Boot 4: авто-конфигурация Liquibase вынесена в отдельный модуль (см. docs/liquibase-migrations.md)
+    runtimeOnly("org.springframework.boot:spring-boot-liquibase")
+    runtimeOnly(libs.postgresql)
+    // Swagger UI (статическая страница docs/index.html читает спеку из /openapi/api.yaml)
+    runtimeOnly(libs.swagger.ui)
+
+    testImplementation(libs.bundles.spring.tests)
+    testImplementation(libs.bundles.mockk)
+}
+
+// Генерация серверных интерфейсов + DTO из OpenAPI-спеки (см. docs/spec-first-workflow.md).
+// Сгенерированный код живёт в build/ и не коммитится.
+val generateApi = tasks.register<org.openapitools.generator.gradle.plugin.tasks.GenerateTask>("generateApi") {
+    input = rootDir.resolve("api/openapi/api.yaml").absolutePath
+    outputDir = layout.buildDirectory.dir("generated/api-openapi").get().asFile.absolutePath
+    generatorName = "kotlin-spring"
+    apiPackage = "com.aura.api"
+    modelPackage = "com.aura.api.model"
+    cleanupOutput = true
+    configOptions = mapOf(
+        "interfaceOnly" to "true",
+        "skipDefaultInterface" to "true",
+        "serviceImplementation" to "false",
+        "useSpringBoot3" to "true",
+        "useJakartaEe" to "true",
+        "serializationLibrary" to "jackson",
+        "documentationProvider" to "none",
+        "useBeanValidation" to "true",
+        "enumPropertyNaming" to "UPPERCASE",
+    )
+}
+
+val generatedSourcesDir = layout.buildDirectory.dir("generated/api-openapi/src/main/kotlin")
+
+sourceSets {
+    main {
+        kotlin {
+            srcDir(generatedSourcesDir)
+        }
+    }
+}
+
+// Спека — источник истины: кладём её в jar как статику, чтобы Swagger UI
+// на /docs/index.html читал именно её (см. docs/spec-first-workflow.md).
+tasks.named<ProcessResources>("processResources") {
+    from(rootDir.resolve("api/openapi")) {
+        into("static/openapi")
+    }
+    // Версия webjar'а подставляется из каталога libs — единого источника версий.
+    filesMatching("static/docs/index.html") {
+        expand("swaggerUiVersion" to libs.versions.swagger.ui.get())
+    }
+}
+
+tasks.named("compileKotlin") {
+    dependsOn(generateApi)
+}
+
+tasks.named<org.springframework.boot.gradle.tasks.run.BootRun>("bootRun") {
+    // Локальный профиль по умолчанию для bootRun; прод задаёт профиль явно.
+    args("--spring.profiles.active=local")
+}

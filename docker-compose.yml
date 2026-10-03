@@ -1,0 +1,30 @@
+services:
+  postgres:
+    image: postgres:17-alpine
+    container_name: aura-postgres
+    environment:
+      POSTGRES_DB: aura
+      POSTGRES_USER: aura
+      POSTGRES_PASSWORD: aura
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./docker/init-db.sql:/docker-entrypoint-initdb.d/init-db.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U aura -d aura"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  redis:
+    image: redis:8-alpine
+    container_name: aura-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redisdata:/data
+
+volumes:
+  pgdata:
+  redisdata:
