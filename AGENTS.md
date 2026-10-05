@@ -26,6 +26,7 @@ Guidance for AI agents working on **Aura** — an emotion-tracking backend with 
 - `modules/` — domain modules: `shared`, `auth`, `user`, `catalog`, `entry`, `note`, `analytics`, `notification`
 - `apps/rest-api/` — the single deployable of this repository (the web frontend and the Telegram bot live in separate repos and consume the published OpenAPI spec)
 - `build-logic/` — convention plugins (`aura.*`); `gradle/libs.versions.toml` — the **only** place for dependency versions
+- `aura-api.postman_collection.json` — Postman collection with runnable requests for every endpoint; must be updated when endpoints change (see hard rule 8)
 
 ## Hard rules (project-specific)
 
@@ -36,6 +37,7 @@ Guidance for AI agents working on **Aura** — an emotion-tracking backend with 
 5. **API conventions**: `/api/v1` path versioning, additive changes only within v1; errors are RFC 9457 `application/problem+json` with `code`/`errors` extensions; pagination `page`/`size` (max 100) with `{items, page, size, totalElements, totalPages}` envelope; analytics periods accept `from`+`to` or `period=week|month|half_year|year`.
 6. **Security**: user JWT — access 15 min + refresh with rotation/reuse detection; the bot authenticates with a service JWT (`typ=service`) for `/internal/v1/**` and acts on behalf of users via token exchange. `/internal/**` is never public.
 7. **Customizable domain**: emotions, factors, events, tracked metrics, and note templates follow the "system (`owner_user_id IS NULL`) + personal" pattern; system entries are immutable to users (they deactivate + create their own). Mood/energy/etc. are metrics, not columns.
+8. **Postman collection is kept in sync**: whenever an endpoint is added, changed, or removed, update `aura-api.postman_collection.json` (repo root) in the same change — new request with examples (success + RFC 9457 errors) and token-saving test scripts where applicable.
 
 ## Stack
 
