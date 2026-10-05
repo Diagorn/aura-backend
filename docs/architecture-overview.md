@@ -6,12 +6,14 @@ Aura — сервис самонаблюдения: пользователь 1�
 
 | Документ | О чём |
 |---|---|
+| [system-overview.md](system-overview.md) | система целиком в рантайме: путь запроса, сквозные сценарии, карта документации |
 | [domain-model.md](domain-model.md) | сущности, ERD, жизненный цикл записи, таймзоны |
 | [api-design.md](api-design.md) | конвенции REST, эндпоинты, ошибки, internal-API |
 | [spec-first-workflow.md](spec-first-workflow.md) | OpenAPI-спека как источник истины, генерация кода |
 | [gradle-structure.md](gradle-structure.md) | multi-module, `libs.versions.toml`, convention-плагины |
 | [liquibase-migrations.md](liquibase-migrations.md) | организация миграций по модулям |
 | [telegram-bot.md](telegram-bot.md) | архитектура бота, связка аккаунтов, напоминания |
+| [modules/auth.md](modules/auth.md) | модуль `auth`: контракт, JWT, потоки, схема БД |
 | [local-dev.md](local-dev.md) | docker-compose, запуск, команды |
 | [roadmap.md](roadmap.md) | этапы реализации |
 

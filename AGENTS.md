@@ -11,7 +11,9 @@ Guidance for AI agents working on **Aura** — an emotion-tracking backend with 
 | Area | Doc |
 |---|---|
 | Big picture, module boundaries, domain events, microservice split strategy | [docs/architecture-overview.md](docs/architecture-overview.md) |
+| Whole system at runtime: request path, end-to-end scenarios, docs map | [docs/system-overview.md](docs/system-overview.md) |
 | Entities, ERD, entry lifecycle, timezones, system presets, validations | [docs/domain-model.md](docs/domain-model.md) |
+| Module `auth` internals: contract, JWT, flows, DB schema | [docs/modules/auth.md](docs/modules/auth.md) |
 | REST conventions, endpoints, error contract, internal API | [docs/api-design.md](docs/api-design.md) |
 | OpenAPI spec layout, generation workflow | [docs/spec-first-workflow.md](docs/spec-first-workflow.md) |
 | Gradle modules, `libs.versions.toml`, convention plugins, dependency rules | [docs/gradle-structure.md](docs/gradle-structure.md) |
