@@ -6,6 +6,10 @@
 - Docker + Docker Compose (инфраструктура и Testcontainers)
 - Gradle wrapper (`./gradlew`) — отдельная установка Gradle не нужна
 
+Gradle-демон пиннут на JDK 21 через `gradle/gradle-daemon-jvm.properties` (Daemon JVM criteria):
+если JDK 21 не установлена, Gradle скачает её автоматически (foojay-resolver подключён в `settings.gradle.kts`).
+Это позволяет запускать сборку с любой JVM-лаунчером — detekt и остальные задачи всегда идут на 21.
+
 ## Инфраструктура (docker-compose)
 
 `docker-compose.yml` в корне — **только инфраструктура**, приложения запускаются Gradle'ом:
