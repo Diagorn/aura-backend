@@ -53,6 +53,9 @@ val generateApi = tasks.register<org.openapitools.generator.gradle.plugin.tasks.
     apiPackage = "com.aura.api"
     modelPackage = "com.aura.api.model"
     cleanupOutput = true
+    // $ref-файлы (paths/, components/) генератор не видит: без этого задача
+    // считает себя up-to-date и восстанавливает из кэша генерацию по старой спеке
+    inputs.dir(rootDir.resolve("api/openapi")).withPathSensitivity(PathSensitivity.RELATIVE)
     configOptions = mapOf(
         "interfaceOnly" to "true",
         "skipDefaultInterface" to "true",

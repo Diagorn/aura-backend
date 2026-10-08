@@ -1,0 +1,313 @@
+EmotionResponse:
+  type: object
+  required:
+    - id
+    - name
+    - isActive
+    - sortOrder
+    - system
+  properties:
+    id:
+      type: integer
+      format: int64
+    name:
+      type: string
+      maxLength: 100
+    color:
+      type: integer
+      format: int32
+      minimum: 0
+      maximum: 16777215
+      description: RGB-цвет для UI; null — цвет не выбран
+      nullable: true
+    icon:
+      type: string
+      maxLength: 128
+      nullable: true
+    isActive:
+      type: boolean
+      description: false — деактивирована пользователем и по умолчанию не отдаётся в списке
+    sortOrder:
+      type: integer
+      format: int32
+      description: Порядок в списке; меньше — выше
+    system:
+      type: boolean
+      description: true — системный пресет, общий для всех; править нельзя (см. PATCH/DELETE)
+
+FactorResponse:
+  type: object
+  required:
+    - id
+    - name
+    - isActive
+    - sortOrder
+    - system
+  properties:
+    id:
+      type: integer
+      format: int64
+    name:
+      type: string
+      maxLength: 100
+    icon:
+      type: string
+      maxLength: 128
+      nullable: true
+    isActive:
+      type: boolean
+      description: false — деактивирован пользователем и по умолчанию не отдаётся в списке
+    sortOrder:
+      type: integer
+      format: int32
+      description: Порядок в списке; меньше — выше
+    system:
+      type: boolean
+      description: true — системный пресет, общий для всех; править нельзя (см. PATCH/DELETE)
+
+EventResponse:
+  type: object
+  required:
+    - id
+    - name
+    - isActive
+    - sortOrder
+    - system
+  properties:
+    id:
+      type: integer
+      format: int64
+    name:
+      type: string
+      maxLength: 100
+    icon:
+      type: string
+      maxLength: 128
+      nullable: true
+    isActive:
+      type: boolean
+      description: false — деактивировано пользователем и по умолчанию не отдаётся в списке
+    sortOrder:
+      type: integer
+      format: int32
+      description: Порядок в списке; меньше — выше
+    system:
+      type: boolean
+      description: true — системный пресет, общий для всех; править нельзя (см. PATCH/DELETE)
+
+MetricResponse:
+  type: object
+  required:
+    - id
+    - name
+    - minValue
+    - maxValue
+    - isActive
+    - sortOrder
+    - system
+  properties:
+    id:
+      type: integer
+      format: int64
+    name:
+      type: string
+      maxLength: 100
+    minValue:
+      type: number
+      description: Нижняя граница шкалы (по умолчанию 1)
+    maxValue:
+      type: number
+      description: Верхняя граница шкалы (по умолчанию 5)
+    unit:
+      type: string
+      maxLength: 16
+      description: Единица измерения, опционально
+      nullable: true
+    isActive:
+      type: boolean
+      description: false — деактивирована пользователем и по умолчанию не отдаётся в списке
+    sortOrder:
+      type: integer
+      format: int32
+      description: Порядок в списке; меньше — выше
+    system:
+      type: boolean
+      description: true — системный пресет, общий для всех; править нельзя (см. PATCH/DELETE)
+
+CreateEmotionRequest:
+  type: object
+  required:
+    - name
+  properties:
+    name:
+      type: string
+      minLength: 1
+      maxLength: 100
+      description: Уникально в рамках пользователя
+    color:
+      type: integer
+      format: int32
+      minimum: 0
+      maximum: 16777215
+      nullable: true
+    icon:
+      type: string
+      maxLength: 128
+      nullable: true
+    sortOrder:
+      type: integer
+      format: int32
+      description: Если не указан — присваивается сервером (в конец списка)
+
+CreateFactorRequest:
+  type: object
+  required:
+    - name
+  properties:
+    name:
+      type: string
+      minLength: 1
+      maxLength: 100
+      description: Уникально в рамках пользователя
+    icon:
+      type: string
+      maxLength: 128
+      nullable: true
+    sortOrder:
+      type: integer
+      format: int32
+      description: Если не указан — присваивается сервером (в конец списка)
+
+CreateEventRequest:
+  type: object
+  required:
+    - name
+  properties:
+    name:
+      type: string
+      minLength: 1
+      maxLength: 100
+      description: Уникально в рамках пользователя
+    icon:
+      type: string
+      maxLength: 128
+      nullable: true
+    sortOrder:
+      type: integer
+      format: int32
+      description: Если не указан — присваивается сервером (в конец списка)
+
+CreateMetricRequest:
+  type: object
+  required:
+    - name
+  properties:
+    name:
+      type: string
+      minLength: 1
+      maxLength: 100
+      description: Уникально в рамках пользователя
+    minValue:
+      type: number
+      description: Нижняя граница шкалы; по умолчанию 1
+    maxValue:
+      type: number
+      description: Верхняя граница шкалы; по умолчанию 5
+    unit:
+      type: string
+      maxLength: 16
+      nullable: true
+    sortOrder:
+      type: integer
+      format: int32
+      description: Если не указан — присваивается сервером (в конец списка)
+
+UpdateEmotionRequest:
+  type: object
+  description: PATCH-семантика — изменяются только переданные поля
+  properties:
+    name:
+      type: string
+      minLength: 1
+      maxLength: 100
+      description: Уникально в рамках пользователя
+    color:
+      type: integer
+      format: int32
+      minimum: 0
+      maximum: 16777215
+      nullable: true
+    icon:
+      type: string
+      maxLength: 128
+      nullable: true
+    isActive:
+      type: boolean
+      description: false — деактивировать; деактивированное по умолчанию скрыто из списка
+    sortOrder:
+      type: integer
+      format: int32
+
+UpdateFactorRequest:
+  type: object
+  description: PATCH-семантика — изменяются только переданные поля
+  properties:
+    name:
+      type: string
+      minLength: 1
+      maxLength: 100
+      description: Уникально в рамках пользователя
+    icon:
+      type: string
+      maxLength: 128
+      nullable: true
+    isActive:
+      type: boolean
+      description: false — деактивировать; деактивированное по умолчанию скрыто из списка
+    sortOrder:
+      type: integer
+      format: int32
+
+UpdateEventRequest:
+  type: object
+  description: PATCH-семантика — изменяются только переданные поля
+  properties:
+    name:
+      type: string
+      minLength: 1
+      maxLength: 100
+      description: Уникально в рамках пользователя
+    icon:
+      type: string
+      maxLength: 128
+      nullable: true
+    isActive:
+      type: boolean
+      description: false — деактивировать; деактивированное по умолчанию скрыто из списка
+    sortOrder:
+      type: integer
+      format: int32
+
+UpdateMetricRequest:
+  type: object
+  description: PATCH-семантика — изменяются только переданные поля
+  properties:
+    name:
+      type: string
+      minLength: 1
+      maxLength: 100
+      description: Уникально в рамках пользователя
+    minValue:
+      type: number
+    maxValue:
+      type: number
+    unit:
+      type: string
+      maxLength: 16
+      nullable: true
+    isActive:
+      type: boolean
+      description: false — деактивировать; деактивированное по умолчанию скрыто из списка
+    sortOrder:
+      type: integer
+      format: int32

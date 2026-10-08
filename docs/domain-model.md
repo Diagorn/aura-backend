@@ -66,7 +66,6 @@ erDiagram
         bigint id PK
         bigint owner_user_id "NULL = системная"
         varchar name
-        varchar valence "POSITIVE | NEGATIVE | NEUTRAL"
         int color "RGB"
         varchar icon
         bool is_active

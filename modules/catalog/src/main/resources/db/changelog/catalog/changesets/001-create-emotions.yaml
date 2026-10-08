@@ -1,0 +1,31 @@
+databaseChangeLog:
+  - changeSet:
+      id: catalog-001-create-emotions
+      author: Diagorn
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+            - tableExists:
+                schemaName: catalog
+                tableName: emotions
+      changes:
+        - createTable:
+            schemaName: catalog
+            tableName: emotions
+            columns:
+              - column: { name: id, type: bigint, autoIncrement: true, constraints: { primaryKey: true, primaryKeyName: pk_emotions } }
+              - column: { name: owner_user_id, type: bigint }
+              - column: { name: name, type: varchar(100), constraints: { nullable: false } }
+              - column: { name: color, type: integer }
+              - column: { name: icon, type: varchar(128) }
+              - column: { name: is_active, type: boolean, defaultValueBoolean: true, constraints: { nullable: false } }
+              - column: { name: sort_order, type: integer, defaultValueNumeric: 0, constraints: { nullable: false } }
+        - addUniqueConstraint:
+            schemaName: catalog
+            tableName: emotions
+            columnNames: owner_user_id, name
+            constraintName: uq_emotions_owner_name
+      rollback:
+        - dropTable:
+            schemaName: catalog
+            tableName: emotions

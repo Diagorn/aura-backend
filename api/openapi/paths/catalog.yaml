@@ -1,0 +1,422 @@
+# Единый шаблон для четырёх справочников чек-ина: emotions, factors, events, metrics.
+# Системные элементы (system=true) общие для всех; править их могут только админы (см. этап 2.2),
+# пользователи создают персональные копии и деактивируют свои.
+
+emotions:
+  get:
+    tags:
+      - catalog
+    operationId: listEmotions
+    summary: Список эмоций
+    description: >
+      Системные пресеты и персональные эмоции пользователя, отсортированные по sortOrder.
+      По умолчанию деактивированные не отдаются; includeInactive=true добавляет их.
+    parameters:
+      - name: includeInactive
+        in: query
+        required: false
+        schema:
+          type: boolean
+          default: false
+    responses:
+      '200':
+        description: Эмоции
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                $ref: '../components/schemas/catalog.yaml#/EmotionResponse'
+      '401':
+        $ref: '../components/responses.yaml#/Unauthorized'
+  post:
+    tags:
+      - catalog
+    operationId: createEmotion
+    summary: Создать персональную эмоцию
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '../components/schemas/catalog.yaml#/CreateEmotionRequest'
+    responses:
+      '201':
+        description: Эмоция создана
+        content:
+          application/json:
+            schema:
+              $ref: '../components/schemas/catalog.yaml#/EmotionResponse'
+      '401':
+        $ref: '../components/responses.yaml#/Unauthorized'
+      '409':
+        $ref: '../components/responses.yaml#/Conflict'
+      '422':
+        $ref: '../components/responses.yaml#/ValidationFailed'
+
+emotion:
+  patch:
+    tags:
+      - catalog
+    operationId: updateEmotion
+    summary: Изменить/деактивировать свою эмоцию
+    description: >
+      PATCH-семантика: изменяются только переданные поля. Правка чужой или несуществующей
+      эмоции — 404 (существование чужого не раскрываем); правка системной — 403.
+    parameters:
+      - $ref: '../components/parameters.yaml#/itemId'
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '../components/schemas/catalog.yaml#/UpdateEmotionRequest'
+    responses:
+      '200':
+        description: Эмоция обновлена
+        content:
+          application/json:
+            schema:
+              $ref: '../components/schemas/catalog.yaml#/EmotionResponse'
+      '401':
+        $ref: '../components/responses.yaml#/Unauthorized'
+      '403':
+        $ref: '../components/responses.yaml#/Forbidden'
+      '404':
+        $ref: '../components/responses.yaml#/NotFound'
+      '409':
+        $ref: '../components/responses.yaml#/Conflict'
+      '422':
+        $ref: '../components/responses.yaml#/ValidationFailed'
+  delete:
+    tags:
+      - catalog
+    operationId: deleteEmotion
+    summary: Удалить свою эмоцию
+    description: Удаляются только персональные эмоции; системная — 403, чужая/несуществующая — 404.
+    parameters:
+      - $ref: '../components/parameters.yaml#/itemId'
+    responses:
+      '204':
+        description: Эмоция удалена
+      '401':
+        $ref: '../components/responses.yaml#/Unauthorized'
+      '403':
+        $ref: '../components/responses.yaml#/Forbidden'
+      '404':
+        $ref: '../components/responses.yaml#/NotFound'
+
+factors:
+  get:
+    tags:
+      - catalog
+    operationId: listFactors
+    summary: Список факторов
+    description: >
+      Системные пресеты и персональные факторы пользователя, отсортированные по sortOrder.
+      По умолчанию деактивированные не отдаются; includeInactive=true добавляет их.
+    parameters:
+      - name: includeInactive
+        in: query
+        required: false
+        schema:
+          type: boolean
+          default: false
+    responses:
+      '200':
+        description: Факторы
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                $ref: '../components/schemas/catalog.yaml#/FactorResponse'
+      '401':
+        $ref: '../components/responses.yaml#/Unauthorized'
+  post:
+    tags:
+      - catalog
+    operationId: createFactor
+    summary: Создать персональный фактор
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '../components/schemas/catalog.yaml#/CreateFactorRequest'
+    responses:
+      '201':
+        description: Фактор создан
+        content:
+          application/json:
+            schema:
+              $ref: '../components/schemas/catalog.yaml#/FactorResponse'
+      '401':
+        $ref: '../components/responses.yaml#/Unauthorized'
+      '409':
+        $ref: '../components/responses.yaml#/Conflict'
+      '422':
+        $ref: '../components/responses.yaml#/ValidationFailed'
+
+factor:
+  patch:
+    tags:
+      - catalog
+    operationId: updateFactor
+    summary: Изменить/деактивировать свой фактор
+    description: >
+      PATCH-семантика: изменяются только переданные поля. Правка чужого или несуществующего
+      фактора — 404 (существование чужого не раскрываем); правка системного — 403.
+    parameters:
+      - $ref: '../components/parameters.yaml#/itemId'
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '../components/schemas/catalog.yaml#/UpdateFactorRequest'
+    responses:
+      '200':
+        description: Фактор обновлён
+        content:
+          application/json:
+            schema:
+              $ref: '../components/schemas/catalog.yaml#/FactorResponse'
+      '401':
+        $ref: '../components/responses.yaml#/Unauthorized'
+      '403':
+        $ref: '../components/responses.yaml#/Forbidden'
+      '404':
+        $ref: '../components/responses.yaml#/NotFound'
+      '409':
+        $ref: '../components/responses.yaml#/Conflict'
+      '422':
+        $ref: '../components/responses.yaml#/ValidationFailed'
+  delete:
+    tags:
+      - catalog
+    operationId: deleteFactor
+    summary: Удалить свой фактор
+    description: Удаляются только персональные факторы; системный — 403, чужой/несуществующий — 404.
+    parameters:
+      - $ref: '../components/parameters.yaml#/itemId'
+    responses:
+      '204':
+        description: Фактор удалён
+      '401':
+        $ref: '../components/responses.yaml#/Unauthorized'
+      '403':
+        $ref: '../components/responses.yaml#/Forbidden'
+      '404':
+        $ref: '../components/responses.yaml#/NotFound'
+
+events:
+  get:
+    tags:
+      - catalog
+    operationId: listEvents
+    summary: Список событий
+    description: >
+      Персональные события пользователя (системных пресетов для событий нет),
+      отсортированные по sortOrder. По умолчанию деактивированные не отдаются;
+      includeInactive=true добавляет их.
+    parameters:
+      - name: includeInactive
+        in: query
+        required: false
+        schema:
+          type: boolean
+          default: false
+    responses:
+      '200':
+        description: События
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                $ref: '../components/schemas/catalog.yaml#/EventResponse'
+      '401':
+        $ref: '../components/responses.yaml#/Unauthorized'
+  post:
+    tags:
+      - catalog
+    operationId: createEvent
+    summary: Создать персональное событие
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '../components/schemas/catalog.yaml#/CreateEventRequest'
+    responses:
+      '201':
+        description: Событие создано
+        content:
+          application/json:
+            schema:
+              $ref: '../components/schemas/catalog.yaml#/EventResponse'
+      '401':
+        $ref: '../components/responses.yaml#/Unauthorized'
+      '409':
+        $ref: '../components/responses.yaml#/Conflict'
+      '422':
+        $ref: '../components/responses.yaml#/ValidationFailed'
+
+event:
+  patch:
+    tags:
+      - catalog
+    operationId: updateEvent
+    summary: Изменить/деактивировать своё событие
+    description: >
+      PATCH-семантика: изменяются только переданные поля. Правка чужого или несуществующего
+      события — 404 (существование чужого не раскрываем); правка системного — 403.
+    parameters:
+      - $ref: '../components/parameters.yaml#/itemId'
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '../components/schemas/catalog.yaml#/UpdateEventRequest'
+    responses:
+      '200':
+        description: Событие обновлено
+        content:
+          application/json:
+            schema:
+              $ref: '../components/schemas/catalog.yaml#/EventResponse'
+      '401':
+        $ref: '../components/responses.yaml#/Unauthorized'
+      '403':
+        $ref: '../components/responses.yaml#/Forbidden'
+      '404':
+        $ref: '../components/responses.yaml#/NotFound'
+      '409':
+        $ref: '../components/responses.yaml#/Conflict'
+      '422':
+        $ref: '../components/responses.yaml#/ValidationFailed'
+  delete:
+    tags:
+      - catalog
+    operationId: deleteEvent
+    summary: Удалить своё событие
+    description: Удаляются только персональные события; системное — 403, чужое/несуществующее — 404.
+    parameters:
+      - $ref: '../components/parameters.yaml#/itemId'
+    responses:
+      '204':
+        description: Событие удалено
+      '401':
+        $ref: '../components/responses.yaml#/Unauthorized'
+      '403':
+        $ref: '../components/responses.yaml#/Forbidden'
+      '404':
+        $ref: '../components/responses.yaml#/NotFound'
+
+metrics:
+  get:
+    tags:
+      - catalog
+    operationId: listMetrics
+    summary: Список отслеживаемых метрик
+    description: >
+      Системные пресеты и персональные метрики пользователя (настроение, энергия, тревожность…),
+      отсортированные по sortOrder. По умолчанию деактивированные не отдаются;
+      includeInactive=true добавляет их.
+    parameters:
+      - name: includeInactive
+        in: query
+        required: false
+        schema:
+          type: boolean
+          default: false
+    responses:
+      '200':
+        description: Метрики
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                $ref: '../components/schemas/catalog.yaml#/MetricResponse'
+      '401':
+        $ref: '../components/responses.yaml#/Unauthorized'
+  post:
+    tags:
+      - catalog
+    operationId: createMetric
+    summary: Создать персональную метрику
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '../components/schemas/catalog.yaml#/CreateMetricRequest'
+    responses:
+      '201':
+        description: Метрика создана
+        content:
+          application/json:
+            schema:
+              $ref: '../components/schemas/catalog.yaml#/MetricResponse'
+      '401':
+        $ref: '../components/responses.yaml#/Unauthorized'
+      '409':
+        $ref: '../components/responses.yaml#/Conflict'
+      '422':
+        $ref: '../components/responses.yaml#/ValidationFailed'
+
+metric:
+  patch:
+    tags:
+      - catalog
+    operationId: updateMetric
+    summary: Изменить/деактивировать свою метрику
+    description: >
+      PATCH-семантика: изменяются только переданные поля. minValue должен быть меньше maxValue.
+      Правка чужой или несуществующей метрики — 404 (существование чужого не раскрываем);
+      правка системной — 403.
+    parameters:
+      - $ref: '../components/parameters.yaml#/itemId'
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '../components/schemas/catalog.yaml#/UpdateMetricRequest'
+    responses:
+      '200':
+        description: Метрика обновлена
+        content:
+          application/json:
+            schema:
+              $ref: '../components/schemas/catalog.yaml#/MetricResponse'
+      '401':
+        $ref: '../components/responses.yaml#/Unauthorized'
+      '403':
+        $ref: '../components/responses.yaml#/Forbidden'
+      '404':
+        $ref: '../components/responses.yaml#/NotFound'
+      '409':
+        $ref: '../components/responses.yaml#/Conflict'
+      '422':
+        $ref: '../components/responses.yaml#/ValidationFailed'
+  delete:
+    tags:
+      - catalog
+    operationId: deleteMetric
+    summary: Удалить свою метрику
+    description: Удаляются только персональные метрики; системная — 403, чужая/несуществующая — 404.
+    parameters:
+      - $ref: '../components/parameters.yaml#/itemId'
+    responses:
+      '204':
+        description: Метрика удалена
+      '401':
+        $ref: '../components/responses.yaml#/Unauthorized'
+      '403':
+        $ref: '../components/responses.yaml#/Forbidden'
+      '404':
+        $ref: '../components/responses.yaml#/NotFound'

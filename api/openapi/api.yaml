@@ -16,6 +16,11 @@ tags:
     description: Профиль текущего пользователя
   - name: auth
     description: Аутентификация, регистрация и связка с Telegram
+  - name: catalog
+    description: >
+      Справочники чек-ина: эмоции, факторы, события, отслеживаемые метрики.
+      Паттерн «системное + персональное»: системные пресеты общие, править их
+      могут только админы; пользователи создают свои и деактивируют свои.
   - name: internal
     description: >
       Внутренний API для Telegram-бота; аутентификация — сервисный JWT
@@ -37,6 +42,22 @@ paths:
     $ref: './paths/auth.yaml#/logout'
   /api/v1/auth/telegram/link-code:
     $ref: './paths/auth.yaml#/telegramLinkCode'
+  /api/v1/catalog/emotions:
+    $ref: './paths/catalog.yaml#/emotions'
+  /api/v1/catalog/emotions/{id}:
+    $ref: './paths/catalog.yaml#/emotion'
+  /api/v1/catalog/factors:
+    $ref: './paths/catalog.yaml#/factors'
+  /api/v1/catalog/factors/{id}:
+    $ref: './paths/catalog.yaml#/factor'
+  /api/v1/catalog/events:
+    $ref: './paths/catalog.yaml#/events'
+  /api/v1/catalog/events/{id}:
+    $ref: './paths/catalog.yaml#/event'
+  /api/v1/catalog/metrics:
+    $ref: './paths/catalog.yaml#/metrics'
+  /api/v1/catalog/metrics/{id}:
+    $ref: './paths/catalog.yaml#/metric'
   /internal/v1/auth/service-token:
     $ref: './paths/internal.yaml#/serviceToken'
   /internal/v1/auth/telegram/link:

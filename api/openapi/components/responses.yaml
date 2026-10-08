@@ -19,6 +19,13 @@ NotFound:
       schema:
         $ref: './schemas/common.yaml#/Problem'
 
+Forbidden:
+  description: Доступ запрещён (например, правка системного элемента справочника не админом)
+  content:
+    application/problem+json:
+      schema:
+        $ref: './schemas/common.yaml#/Problem'
+
 Conflict:
   description: Конфликт состояния (например, email уже занят или аккаунт уже связан)
   content:
