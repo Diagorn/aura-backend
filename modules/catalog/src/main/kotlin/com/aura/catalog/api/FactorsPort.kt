@@ -19,4 +19,7 @@ interface FactorsPort {
 
     /** Удаляет свой фактор; чужой/несуществующий — [com.aura.shared.NotFoundException]. */
     fun delete(userId: Long, id: Long)
+
+    /** Факторы по id для использования в записях; семантика — [EmotionsPort.findVisibleByIds]. */
+    fun findVisibleByIds(userId: Long, ids: Collection<Long>): List<Factor>
 }

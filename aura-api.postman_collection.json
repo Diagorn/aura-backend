@@ -2,7 +2,7 @@
 	"info": {
 		"_postman_id": "d3f8c1a2-4b5e-4c7a-9d21-6f0a52b7e9aa",
 		"name": "Aura API",
-		"description": "Запросы к REST API Aura (этапы 1–2.1 — auth, профиль и справочники каталога).\n\n**Пользовательский флоу:** Register → Login → /me → Refresh → Logout → Telegram link-code.\n**Контур бота:** Service token → Telegram link → Exchange.\n\nТокены сохраняются автоматически скриптами (вкладка Tests запросов):\n- `accessToken` / `refreshToken` — из register, login, refresh;\n- `serviceToken` — из service-token;\n- `telegramLinkCode` — из link-code;\n- `botAccessToken` — из exchange (токен бота для действий от имени пользователя);\n- `emotionId` / `factorId` / `eventId` / `metricId` — из create-запросов каталога.\n\nУ каждого запроса во вкладке **Examples** — примеры ответов: успех и основные ошибки (RFC 9457 problem+json).\n\nЗапуск приложения: `docker compose up -d`, затем `./gradlew :apps:rest-api:bootRun`.\nДефолтная регистрация без timezone даёт Europe/Moscow (UTC+3).\nСпека: http://localhost:8080/openapi/api.yaml (Swagger UI — http://localhost:8080/docs/index.html).",
+		"description": "Запросы к REST API Aura (этапы 1–3 — auth, профиль, справочники каталога и записи чек-ина).\n\n**Пользовательский флоу:** Register → Login → /me → Refresh → Logout → Telegram link-code.\n**Контур бота:** Service token → Telegram link → Exchange.\n\nТокены сохраняются автоматически скриптами (вкладка Tests запросов):\n- `accessToken` / `refreshToken` — из register, login, refresh;\n- `serviceToken` — из service-token;\n- `telegramLinkCode` — из link-code;\n- `botAccessToken` — из exchange (токен бота для действий от имени пользователя);\n- `emotionId` / `factorId` / `eventId` / `metricId` — из create-запросов каталога;\n- `entryId` / `entryDate` — из create-запроса записи.\n\nУ каждого запроса во вкладке **Examples** — примеры ответов: успех и основные ошибки (RFC 9457 problem+json).\n\nЗапуск приложения: `docker compose up -d`, затем `./gradlew :apps:rest-api:bootRun`.\nДефолтная регистрация без timezone даёт Europe/Moscow (UTC+3).\nСпека: http://localhost:8080/openapi/api.yaml (Swagger UI — http://localhost:8080/docs/index.html).",
 		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
 	},
 	"variable": [
@@ -3134,6 +3134,617 @@
 									"body": "{\n  \"type\": \"https://aura.example.com/problems/system-item-forbidden\",\n  \"title\": \"Forbidden\",\n  \"status\": 403,\n  \"detail\": \"Системные метрики удалять нельзя — деактивируйте или скройте их\",\n  \"instance\": \"/api/v1/catalog/metrics/1\",\n  \"code\": \"SYSTEM_ITEM_FORBIDDEN\"\n}"
 								}
 							]
+						}
+					]
+				}
+			]
+		},
+		{
+			"name": "Entries",
+			"description": "Записи чек-ина (этап 3): эмоции с интенсивностью и влиянием, факторы, события, метрики.\nСохранение одной командой (status=COMPLETED) или DRAFT-циклом с дозаполнением через PATCH.\nentryDate вычисляет сервер по таймзоне пользователя; лимит — 5 записей в сутки (включая черновики).",
+			"item": [
+				{
+					"name": "Create запись",
+					"request": {
+						"method": "POST",
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{accessToken}}",
+									"type": "string"
+								}
+							]
+						},
+						"url": "{{baseUrl}}/api/v1/entries",
+						"description": "Создать чек-ин одной командой с вложенными коллекциями.\nstatus=COMPLETED требует минимум одну эмоцию; DRAFT может быть пустым.\nsource не передан — WEB (бот передаёт TELEGRAM).\nПревышен суточный лимит — 409 ENTRY_DAILY_LIMIT_EXCEEDED.",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							},
+							"raw": "{\n  \"status\": \"COMPLETED\",\n  \"emotions\": [\n    {\n      \"emotionId\": \"{{emotionId}}\",\n      \"intensity\": 4,\n      \"influence\": 2\n    }\n  ],\n  \"factors\": [\n    {\n      \"factorId\": \"{{factorId}}\",\n      \"intensity\": 3\n    }\n  ],\n  \"events\": [\n    {\n      \"eventId\": \"{{eventId}}\"\n    }\n  ],\n  \"metrics\": [\n    {\n      \"metricId\": \"{{metricId}}\",\n      \"value\": 4\n    }\n  ],\n  \"note\": \"Тяжёлый день на работе\"\n}"
+						}
+					},
+					"response": [
+						{
+							"name": "201 — запись создана",
+							"originalRequest": {
+								"method": "POST",
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{accessToken}}",
+											"type": "string"
+										}
+									]
+								},
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									}
+								],
+								"url": "{{baseUrl}}/api/v1/entries"
+							},
+							"status": "Created",
+							"code": 201,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Content-Type",
+									"value": "application/json"
+								}
+							],
+							"cookie": [],
+							"body": "{\n  \"id\": 1024,\n  \"userId\": 7,\n  \"entryDate\": \"2026-10-03\",\n  \"recordedAt\": \"2026-10-03T20:15:00Z\",\n  \"source\": \"WEB\",\n  \"status\": \"COMPLETED\",\n  \"emotions\": [\n    {\n      \"emotionId\": 12,\n      \"name\": \"Тревога\",\n      \"intensity\": 4,\n      \"influence\": 2\n    }\n  ],\n  \"factors\": [\n    {\n      \"factorId\": 4,\n      \"name\": \"Работа\",\n      \"intensity\": 3\n    }\n  ],\n  \"events\": [\n    {\n      \"eventId\": 9,\n      \"name\": \"Ссора с коллегой\"\n    }\n  ],\n  \"metrics\": [\n    {\n      \"metricId\": 2,\n      \"name\": \"Энергия\",\n      \"value\": 4\n    }\n  ],\n  \"note\": \"Тяжёлый день на работе\"\n}"
+						},
+						{
+							"name": "409 — В сутки можно создать не больше 5 записей (включая черновики",
+							"originalRequest": {
+								"method": "GET",
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{accessToken}}",
+											"type": "string"
+										}
+									]
+								},
+								"url": "{{baseUrl}}/api/v1/entries"
+							},
+							"status": "Conflict",
+							"code": 409,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Content-Type",
+									"value": "application/problem+json"
+								}
+							],
+							"cookie": [],
+							"body": "{\n  \"type\": \"https://aura.example.com/problems/entry-daily-limit-exceeded\",\n  \"title\": \"Conflict\",\n  \"status\": 409,\n  \"detail\": \"В сутки можно создать не больше 5 записей (включая черновики)\",\n  \"instance\": \"/api/v1/entries\",\n  \"code\": \"ENTRY_DAILY_LIMIT_EXCEEDED\"\n}"
+						},
+						{
+							"name": "422 — Некоторые поля некорректны",
+							"originalRequest": {
+								"method": "GET",
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{accessToken}}",
+											"type": "string"
+										}
+									]
+								},
+								"url": "{{baseUrl}}/api/v1/entries"
+							},
+							"status": "Unprocessable Content",
+							"code": 422,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Content-Type",
+									"value": "application/problem+json"
+								}
+							],
+							"cookie": [],
+							"body": "{\n  \"type\": \"https://aura.example.com/problems/validation-failed\",\n  \"title\": \"Unprocessable Content\",\n  \"status\": 422,\n  \"detail\": \"Некоторые поля некорректны\",\n  \"instance\": \"/api/v1/entries\",\n  \"code\": \"VALIDATION_FAILED\",\n  \"errors\": [\n    {\n      \"field\": \"emotions\",\n      \"message\": \"должна быть минимум одна эмоция для COMPLETED\"\n    }\n  ]\n}"
+						},
+						{
+							"name": "401 — Требуется аутентификация",
+							"originalRequest": {
+								"method": "GET",
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{accessToken}}",
+											"type": "string"
+										}
+									]
+								},
+								"url": "{{baseUrl}}/api/v1/entries"
+							},
+							"status": "Unauthorized",
+							"code": 401,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Content-Type",
+									"value": "application/problem+json"
+								}
+							],
+							"cookie": [],
+							"body": "{\n  \"type\": \"https://aura.example.com/problems/unauthorized\",\n  \"title\": \"Unauthorized\",\n  \"status\": 401,\n  \"detail\": \"Требуется аутентификация\",\n  \"instance\": \"/api/v1/entries\",\n  \"code\": \"UNAUTHORIZED\"\n}"
+						}
+					],
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"if (pm.response.code === 201) {",
+									"    const json = pm.response.json();",
+									"    pm.collectionVariables.set('entryId', json.id);",
+									"    pm.collectionVariables.set('entryDate', json.entryDate);",
+									"    pm.test('запись сохранена, id и дата получены', () => {",
+									"        pm.expect(json.id).to.be.a('number');",
+									"        pm.expect(json.entryDate).to.match(/^\\d{4}-\\d{2}-\\d{2}$/);",
+									"    });",
+									"}"
+								]
+							}
+						}
+					]
+				},
+				{
+					"name": "List записей за дату",
+					"request": {
+						"method": "GET",
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{accessToken}}",
+									"type": "string"
+								}
+							]
+						},
+						"url": "{{baseUrl}}/api/v1/entries?date={{entryDate}}",
+						"description": "Фильтр: либо date (все чек-ины дня — «быстрый возврат к дате»), либо пара from+to (включительно); date и from/to взаимоисключающи. Без фильтров даты — все записи пользователя. Фильтры status, source; пагинация page/size (макс. 100), sort=recordedAt,desc."
+					},
+					"response": [
+						{
+							"name": "200 — страница записей",
+							"originalRequest": {
+								"method": "GET",
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{accessToken}}",
+											"type": "string"
+										}
+									]
+								},
+								"header": [],
+								"url": "{{baseUrl}}/api/v1/entries?date=2026-10-03"
+							},
+							"status": "OK",
+							"code": 200,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Content-Type",
+									"value": "application/json"
+								}
+							],
+							"cookie": [],
+							"body": "{\n  \"items\": [\n    {\n      \"id\": 1024,\n      \"userId\": 7,\n      \"entryDate\": \"2026-10-03\",\n      \"recordedAt\": \"2026-10-03T20:15:00Z\",\n      \"source\": \"WEB\",\n      \"status\": \"COMPLETED\",\n      \"emotions\": [\n        {\n          \"emotionId\": 12,\n          \"name\": \"Тревога\",\n          \"intensity\": 4,\n          \"influence\": 2\n        }\n      ],\n      \"factors\": [\n        {\n          \"factorId\": 4,\n          \"name\": \"Работа\",\n          \"intensity\": 3\n        }\n      ],\n      \"events\": [\n        {\n          \"eventId\": 9,\n          \"name\": \"Ссора с коллегой\"\n        }\n      ],\n      \"metrics\": [\n        {\n          \"metricId\": 2,\n          \"name\": \"Энергия\",\n          \"value\": 4\n        }\n      ],\n      \"note\": \"Тяжёлый день на работе\"\n    }\n  ],\n  \"page\": 0,\n  \"size\": 20,\n  \"totalElements\": 1,\n  \"totalPages\": 1\n}"
+						},
+						{
+							"name": "422 — Некоторые поля некорректны",
+							"originalRequest": {
+								"method": "GET",
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{accessToken}}",
+											"type": "string"
+										}
+									]
+								},
+								"url": "{{baseUrl}}/api/v1/entries?date=2026-10-03&from=2026-10-01&to=2026-10-02"
+							},
+							"status": "Unprocessable Content",
+							"code": 422,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Content-Type",
+									"value": "application/problem+json"
+								}
+							],
+							"cookie": [],
+							"body": "{\n  \"type\": \"https://aura.example.com/problems/validation-failed\",\n  \"title\": \"Unprocessable Content\",\n  \"status\": 422,\n  \"detail\": \"Некоторые поля некорректны\",\n  \"instance\": \"/api/v1/entries?date=2026-10-03&from=2026-10-01&to=2026-10-02\",\n  \"code\": \"VALIDATION_FAILED\",\n  \"errors\": [\n    {\n      \"field\": \"date\",\n      \"message\": \"взаимоисключающ с параметрами from/to\"\n    }\n  ]\n}"
+						}
+					]
+				},
+				{
+					"name": "Get запись",
+					"request": {
+						"method": "GET",
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{accessToken}}",
+									"type": "string"
+								}
+							]
+						},
+						"url": "{{baseUrl}}/api/v1/entries/{{entryId}}",
+						"description": "Полная запись по id. Чужая или несуществующая — 404 (существование не раскрываем)."
+					},
+					"response": [
+						{
+							"name": "200 — полная запись",
+							"originalRequest": {
+								"method": "GET",
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{accessToken}}",
+											"type": "string"
+										}
+									]
+								},
+								"header": [],
+								"url": "{{baseUrl}}/api/v1/entries/1024"
+							},
+							"status": "OK",
+							"code": 200,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Content-Type",
+									"value": "application/json"
+								}
+							],
+							"cookie": [],
+							"body": "{\n  \"id\": 1024,\n  \"userId\": 7,\n  \"entryDate\": \"2026-10-03\",\n  \"recordedAt\": \"2026-10-03T20:15:00Z\",\n  \"source\": \"WEB\",\n  \"status\": \"COMPLETED\",\n  \"emotions\": [\n    {\n      \"emotionId\": 12,\n      \"name\": \"Тревога\",\n      \"intensity\": 4,\n      \"influence\": 2\n    }\n  ],\n  \"factors\": [\n    {\n      \"factorId\": 4,\n      \"name\": \"Работа\",\n      \"intensity\": 3\n    }\n  ],\n  \"events\": [\n    {\n      \"eventId\": 9,\n      \"name\": \"Ссора с коллегой\"\n    }\n  ],\n  \"metrics\": [\n    {\n      \"metricId\": 2,\n      \"name\": \"Энергия\",\n      \"value\": 4\n    }\n  ],\n  \"note\": \"Тяжёлый день на работе\"\n}"
+						},
+						{
+							"name": "404 — Ресурс не найден",
+							"originalRequest": {
+								"method": "GET",
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{accessToken}}",
+											"type": "string"
+										}
+									]
+								},
+								"url": "{{baseUrl}}/api/v1/entries/1024"
+							},
+							"status": "Not Found",
+							"code": 404,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Content-Type",
+									"value": "application/problem+json"
+								}
+							],
+							"cookie": [],
+							"body": "{\n  \"type\": \"https://aura.example.com/problems/not-found\",\n  \"title\": \"Not Found\",\n  \"status\": 404,\n  \"detail\": \"Ресурс не найден\",\n  \"instance\": \"/api/v1/entries/1024\",\n  \"code\": \"NOT_FOUND\"\n}"
+						}
+					]
+				},
+				{
+					"name": "Patch запись (DRAFT-цикл)",
+					"request": {
+						"method": "PATCH",
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{accessToken}}",
+									"type": "string"
+								}
+							]
+						},
+						"url": "{{baseUrl}}/api/v1/entries/{{entryId}}",
+						"description": "Дозаполнение/правки: изменяются только переданные поля; переданная коллекция заменяется целиком. DRAFT -> COMPLETED требует минимум одну эмоцию; COMPLETED -> DRAFT запрещён (422). Чтобы очистить note — пустая строка.",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							},
+							"raw": "{\n  \"status\": \"COMPLETED\",\n  \"note\": \"Обновлённая заметка\"\n}"
+						}
+					},
+					"response": [
+						{
+							"name": "200 — запись обновлена",
+							"originalRequest": {
+								"method": "PATCH",
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{accessToken}}",
+											"type": "string"
+										}
+									]
+								},
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									}
+								],
+								"url": "{{baseUrl}}/api/v1/entries/1024"
+							},
+							"status": "OK",
+							"code": 200,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Content-Type",
+									"value": "application/json"
+								}
+							],
+							"cookie": [],
+							"body": "{\n  \"id\": 1024,\n  \"userId\": 7,\n  \"entryDate\": \"2026-10-03\",\n  \"recordedAt\": \"2026-10-03T20:15:00Z\",\n  \"source\": \"WEB\",\n  \"status\": \"COMPLETED\",\n  \"emotions\": [\n    {\n      \"emotionId\": 12,\n      \"name\": \"Тревога\",\n      \"intensity\": 4,\n      \"influence\": 2\n    }\n  ],\n  \"factors\": [\n    {\n      \"factorId\": 4,\n      \"name\": \"Работа\",\n      \"intensity\": 3\n    }\n  ],\n  \"events\": [\n    {\n      \"eventId\": 9,\n      \"name\": \"Ссора с коллегой\"\n    }\n  ],\n  \"metrics\": [\n    {\n      \"metricId\": 2,\n      \"name\": \"Энергия\",\n      \"value\": 4\n    }\n  ],\n  \"note\": \"Тяжёлый день на работе\"\n}"
+						},
+						{
+							"name": "422 — Некоторые поля некорректны",
+							"originalRequest": {
+								"method": "GET",
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{accessToken}}",
+											"type": "string"
+										}
+									]
+								},
+								"url": "{{baseUrl}}/api/v1/entries/1024"
+							},
+							"status": "Unprocessable Content",
+							"code": 422,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Content-Type",
+									"value": "application/problem+json"
+								}
+							],
+							"cookie": [],
+							"body": "{\n  \"type\": \"https://aura.example.com/problems/validation-failed\",\n  \"title\": \"Unprocessable Content\",\n  \"status\": 422,\n  \"detail\": \"Некоторые поля некорректны\",\n  \"instance\": \"/api/v1/entries/1024\",\n  \"code\": \"VALIDATION_FAILED\",\n  \"errors\": [\n    {\n      \"field\": \"status\",\n      \"message\": \"переход COMPLETED -> DRAFT запрещён\"\n    }\n  ]\n}"
+						},
+						{
+							"name": "404 — Ресурс не найден",
+							"originalRequest": {
+								"method": "GET",
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{accessToken}}",
+											"type": "string"
+										}
+									]
+								},
+								"url": "{{baseUrl}}/api/v1/entries/1024"
+							},
+							"status": "Not Found",
+							"code": 404,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Content-Type",
+									"value": "application/problem+json"
+								}
+							],
+							"cookie": [],
+							"body": "{\n  \"type\": \"https://aura.example.com/problems/not-found\",\n  \"title\": \"Not Found\",\n  \"status\": 404,\n  \"detail\": \"Ресурс не найден\",\n  \"instance\": \"/api/v1/entries/1024\",\n  \"code\": \"NOT_FOUND\"\n}"
+						}
+					]
+				},
+				{
+					"name": "Delete запись",
+					"request": {
+						"method": "DELETE",
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{accessToken}}",
+									"type": "string"
+								}
+							]
+						},
+						"url": "{{baseUrl}}/api/v1/entries/{{entryId}}",
+						"description": "Удаляет запись вместе с вложенными коллекциями. Чужая/несуществующая — 404."
+					},
+					"response": [
+						{
+							"name": "204 — запись удалена",
+							"originalRequest": {
+								"method": "GET",
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{accessToken}}",
+											"type": "string"
+										}
+									]
+								},
+								"header": [],
+								"url": "{{baseUrl}}/api/v1/entries/1024"
+							},
+							"status": "No Content",
+							"code": 204,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Content-Type",
+									"value": "application/json"
+								}
+							],
+							"cookie": [],
+							"body": null
+						},
+						{
+							"name": "404 — Ресурс не найден",
+							"originalRequest": {
+								"method": "GET",
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{accessToken}}",
+											"type": "string"
+										}
+									]
+								},
+								"url": "{{baseUrl}}/api/v1/entries/1024"
+							},
+							"status": "Not Found",
+							"code": 404,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Content-Type",
+									"value": "application/problem+json"
+								}
+							],
+							"cookie": [],
+							"body": "{\n  \"type\": \"https://aura.example.com/problems/not-found\",\n  \"title\": \"Not Found\",\n  \"status\": 404,\n  \"detail\": \"Ресурс не найден\",\n  \"instance\": \"/api/v1/entries/1024\",\n  \"code\": \"NOT_FOUND\"\n}"
+						}
+					]
+				},
+				{
+					"name": "Calendar месяца",
+					"request": {
+						"method": "GET",
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{accessToken}}",
+									"type": "string"
+								}
+							]
+						},
+						"url": "{{baseUrl}}/api/v1/entries/calendar?month=2026-10",
+						"description": "Календарик: дни месяца (в таймзоне пользователя), в которые есть записи — число записей и наличие завершённых. month=YYYY-MM; не передан — текущий месяц."
+					},
+					"response": [
+						{
+							"name": "200 — дни месяца с записями",
+							"originalRequest": {
+								"method": "GET",
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{accessToken}}",
+											"type": "string"
+										}
+									]
+								},
+								"header": [],
+								"url": "{{baseUrl}}/api/v1/entries/calendar?month=2026-10"
+							},
+							"status": "OK",
+							"code": 200,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Content-Type",
+									"value": "application/json"
+								}
+							],
+							"cookie": [],
+							"body": "{\n  \"month\": \"2026-10\",\n  \"days\": [\n    {\n      \"date\": \"2026-10-03\",\n      \"entriesCount\": 2,\n      \"hasCompleted\": true\n    }\n  ]\n}"
+						},
+						{
+							"name": "422 — Некоторые поля некорректны",
+							"originalRequest": {
+								"method": "GET",
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{accessToken}}",
+											"type": "string"
+										}
+									]
+								},
+								"url": "{{baseUrl}}/api/v1/entries/calendar?month=october"
+							},
+							"status": "Unprocessable Content",
+							"code": 422,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Content-Type",
+									"value": "application/problem+json"
+								}
+							],
+							"cookie": [],
+							"body": "{\n  \"type\": \"https://aura.example.com/problems/validation-failed\",\n  \"title\": \"Unprocessable Content\",\n  \"status\": 422,\n  \"detail\": \"Некоторые поля некорректны\",\n  \"instance\": \"/api/v1/entries/calendar?month=october\",\n  \"code\": \"VALIDATION_FAILED\",\n  \"errors\": [\n    {\n      \"field\": \"month\",\n      \"message\": \"ожидается формат yyyy-MM\"\n    }\n  ]\n}"
 						}
 					]
 				}

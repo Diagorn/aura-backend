@@ -1,0 +1,46 @@
+databaseChangeLog:
+  - changeSet:
+      id: entry-003-create-entry-factors
+      author: diagorn
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+            - tableExists:
+                schemaName: entry
+                tableName: entry_factors
+      changes:
+        - createTable:
+            schemaName: entry
+            tableName: entry_factors
+            columns:
+              - column: { name: id, type: bigint, autoIncrement: true, constraints: { primaryKey: true, primaryKeyName: pk_entry_factors } }
+              - column: { name: entry_id, type: bigint, constraints: { nullable: false } }
+              # ссылка на catalog.factors — по id, без FK (чужая схема)
+              - column: { name: factor_id, type: bigint, constraints: { nullable: false } }
+              - column: { name: intensity, type: integer }
+        - addForeignKeyConstraint:
+            baseTableSchemaName: entry
+            baseTableName: entry_factors
+            baseColumnNames: entry_id
+            referencedTableSchemaName: entry
+            referencedTableName: entries
+            referencedColumnNames: id
+            constraintName: fk_entry_factors_entry
+            onDelete: CASCADE
+        - addUniqueConstraint:
+            schemaName: entry
+            tableName: entry_factors
+            columnNames: entry_id, factor_id
+            constraintName: uq_entry_factors_entry_factor
+        - createIndex:
+            schemaName: entry
+            indexName: idx_entry_factors_factor
+            tableName: entry_factors
+            columns:
+              - column: { name: factor_id }
+        - sql:
+            sql: ALTER TABLE entry.entry_factors ADD CONSTRAINT ck_entry_factors_intensity CHECK (intensity IS NULL OR intensity BETWEEN 1 AND 5)
+      rollback:
+        - dropTable:
+            schemaName: entry
+            tableName: entry_factors

@@ -1,0 +1,163 @@
+# Записи чек-ина (/api/v1/entries): создание с вложенными коллекциями, DRAFT-цикл,
+# навигация по датам и календарь месяца. entryDate вычисляет сервер по таймзоне
+# пользователя из момента сохранения (см. docs/domain-model.md).
+
+entries:
+  get:
+    tags:
+      - entries
+    operationId: listEntries
+    summary: Список записей за дату, период или все
+    description: >
+      Фильтр: либо date (все чек-ины дня — «быстрый возврат к дате»), либо пара from+to
+      (включительно); передать и date, и from/to — 422. Без фильтров даты — все записи
+      пользователя. Дополнительно фильтруются по status и source. Пагинация page/size.
+    parameters:
+      - $ref: '../components/parameters.yaml#/date'
+      - $ref: '../components/parameters.yaml#/from'
+      - $ref: '../components/parameters.yaml#/to'
+      - name: status
+        in: query
+        required: false
+        schema:
+          $ref: '../components/schemas/entry.yaml#/EntryStatus'
+      - name: source
+        in: query
+        required: false
+        schema:
+          $ref: '../components/schemas/entry.yaml#/EntrySource'
+      - $ref: '../components/parameters.yaml#/page'
+      - $ref: '../components/parameters.yaml#/size'
+      - $ref: '../components/parameters.yaml#/sort'
+    responses:
+      '200':
+        description: Страница записей
+        content:
+          application/json:
+            schema:
+              $ref: '../components/schemas/entry.yaml#/EntryPage'
+      '401':
+        $ref: '../components/responses.yaml#/Unauthorized'
+      '422':
+        $ref: '../components/responses.yaml#/ValidationFailed'
+  post:
+    tags:
+      - entries
+    operationId: createEntry
+    summary: Создать запись (чек-ин)
+    description: >
+      Одна команда с вложенными коллекциями либо начало DRAFT с дозаполнением через PATCH.
+      status=COMPLETED требует минимум одну эмоцию. Записей на сутки (включая черновики)
+      не больше лимита, иначе 409. entryDate и recordedAt вычисляет сервер.
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '../components/schemas/entry.yaml#/CreateEntryRequest'
+    responses:
+      '201':
+        description: Запись создана
+        content:
+          application/json:
+            schema:
+              $ref: '../components/schemas/entry.yaml#/EntryResponse'
+      '401':
+        $ref: '../components/responses.yaml#/Unauthorized'
+      '409':
+        description: Превышен лимит записей в сутки
+        content:
+          application/problem+json:
+            schema:
+              $ref: '../components/schemas/common.yaml#/Problem'
+      '422':
+        $ref: '../components/responses.yaml#/ValidationFailed'
+
+entry:
+  get:
+    tags:
+      - entries
+    operationId: getEntry
+    summary: Полная запись по id
+    description: Чужая или несуществующая запись — 404 (не раскрываем).
+    parameters:
+      - $ref: '../components/parameters.yaml#/entryId'
+    responses:
+      '200':
+        description: Запись
+        content:
+          application/json:
+            schema:
+              $ref: '../components/schemas/entry.yaml#/EntryResponse'
+      '401':
+        $ref: '../components/responses.yaml#/Unauthorized'
+      '404':
+        $ref: '../components/responses.yaml#/NotFound'
+  patch:
+    tags:
+      - entries
+    operationId: updateEntry
+    summary: Дозаполнить/отредактировать запись
+    description: >
+      PATCH-семантика: изменяются только переданные поля; переданная коллекция заменяется
+      целиком. DRAFT -> COMPLETED требует минимум одну эмоцию; COMPLETED -> DRAFT запрещён (422).
+      Только владелец; чужая/несуществующая — 404.
+    parameters:
+      - $ref: '../components/parameters.yaml#/entryId'
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '../components/schemas/entry.yaml#/UpdateEntryRequest'
+    responses:
+      '200':
+        description: Запись обновлена
+        content:
+          application/json:
+            schema:
+              $ref: '../components/schemas/entry.yaml#/EntryResponse'
+      '401':
+        $ref: '../components/responses.yaml#/Unauthorized'
+      '404':
+        $ref: '../components/responses.yaml#/NotFound'
+      '422':
+        $ref: '../components/responses.yaml#/ValidationFailed'
+  delete:
+    tags:
+      - entries
+    operationId: deleteEntry
+    summary: Удалить свою запись
+    description: Удаляется вместе с вложенными коллекциями; чужая/несуществующая — 404.
+    parameters:
+      - $ref: '../components/parameters.yaml#/entryId'
+    responses:
+      '204':
+        description: Запись удалена
+      '401':
+        $ref: '../components/responses.yaml#/Unauthorized'
+      '404':
+        $ref: '../components/responses.yaml#/NotFound'
+
+calendar:
+  get:
+    tags:
+      - entries
+    operationId: getEntryCalendar
+    summary: Календарь месяца — дни с числом записей
+    description: >
+      Дни месяца (в таймзоне пользователя), в которые есть хотя бы одна запись, —
+      для календарика фронта и бота. По умолчанию текущий месяц.
+    parameters:
+      - $ref: '../components/parameters.yaml#/month'
+    responses:
+      '200':
+        description: Дни месяца с записями
+        content:
+          application/json:
+            schema:
+              $ref: '../components/schemas/entry.yaml#/CalendarResponse'
+      '401':
+        $ref: '../components/responses.yaml#/Unauthorized'
+      '422':
+        $ref: '../components/responses.yaml#/ValidationFailed'

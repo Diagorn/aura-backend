@@ -71,6 +71,7 @@ Guidance for AI agents working on **Aura** — an emotion-tracking backend with 
 - Use **MockK** for test doubles: plain `mockk` in unit tests, `@MockkBean` (springmockk) in slice tests. Explicit test auto-configuration. Skill `testing-pyramid` examples use Mockito — translate them to MockK idioms.
 - Preserve error, security, pagination, nullability, and observability contracts.
 - Model optionality with Kotlin nullable types; avoid platform types at API and persistence boundaries.
+- **Never use the Kotlin `!!` operator** in production code (`src/main`, build logic): a bare `!!` throws a context-free `NullPointerException`. Replace it with an explicit null check that fails with a meaningful error — `checkNotNull(x) { "…" }` / `requireNotNull(x) { "…" }` for invariants, `error("…")` for unreachable states, or the module's `ApiException` (e.g. `ValidationFailedException`) when the null comes from user input. Tests may use `!!` sparingly.
 
 ## Skills
 

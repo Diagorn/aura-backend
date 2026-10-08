@@ -19,4 +19,7 @@ interface EventsPort {
 
     /** Удаляет своё событие; чужое/несуществующее — [com.aura.shared.NotFoundException]. */
     fun delete(userId: Long, id: Long)
+
+    /** События по id для использования в записях; семантика — [EmotionsPort.findVisibleByIds]. */
+    fun findVisibleByIds(userId: Long, ids: Collection<Long>): List<CatalogEvent>
 }

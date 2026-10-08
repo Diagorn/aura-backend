@@ -31,6 +31,15 @@ interface EmotionRepository : JpaRepository<EmotionEntity, Long> {
     /** Последний по sortOrder элемент пользователя — для присвоения следующего порядка. */
     fun findFirstByOwnerUserIdOrderBySortOrderDesc(ownerUserId: Long): EmotionEntity?
 
+    /** Элементы для записей по id: только системные и личные данного пользователя. */
+    @Query(
+        """
+        select e from EmotionEntity e
+        where e.id in :ids and (e.ownerUserId = :userId or e.ownerUserId is null)
+        """,
+    )
+    fun findVisibleByIds(@Param("userId") userId: Long, @Param("ids") ids: Collection<Long>): List<EmotionEntity>
+
     /** Забирает элемент по id или бросает [NotFoundException] (fetch-or-throw — в репозитории). */
     fun requireById(id: Long): EmotionEntity = findById(id).orElseThrow { NotFoundException("Эмоция не найдена") }
 }

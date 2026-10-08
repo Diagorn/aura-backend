@@ -85,7 +85,7 @@
 | Метод | Путь | Описание |
 |---|---|---|
 | POST | `/api/v1/entries` | создать (`status: DRAFT | COMPLETED`), 201 |
-| GET | `/api/v1/entries` | фильтры: `date=` **или** `from`+`to`; `status`, `source`; пагинация |
+| GET | `/api/v1/entries` | фильтры: `date=` **или** `from`+`to` (без фильтров — все записи); `status`, `source`; пагинация |
 | GET | `/api/v1/entries/{id}` | полная запись |
 | PATCH | `/api/v1/entries/{id}` | дозаполнение/правки; переданные коллекции заменяются целиком |
 | DELETE | `/api/v1/entries/{id}` | 204 |
@@ -97,6 +97,7 @@
 POST /api/v1/entries
 {
   "status": "COMPLETED",
+  "source": "WEB",
   "emotions": [
     { "emotionId": 12, "intensity": 4, "influence": 2 }
   ],
@@ -112,6 +113,12 @@ POST /api/v1/entries
   "note": "Тяжёлый день на работе"
 }
 ```
+
+- `source` — клиент, с которого создана запись (`WEB` | `TELEGRAM`); не передан — `WEB`. Бот (этап 6) пишет через те же эндпоинты и передаёт `TELEGRAM`.
+- `status: COMPLETED` требует минимум одну эмоцию; `DRAFT` может быть пустым и дозаполняется через `PATCH` (переданная коллекция заменяется целиком; `note: ""` — очистить; `COMPLETED → DRAFT` запрещён).
+- Элементы справочников в записи должны быть системными или личными пользователя и активными (`isActive=true`); значение метрики — в шкале своей метрики. Ошибки собираются в один 422 `VALIDATION_FAILED` со списком `errors` (`emotions[0].emotionId`, `metrics[0].value`…).
+- `entryDate` и `recordedAt` проставляет сервер (`entry_date` — по таймзоне пользователя) и PATCH их не меняет.
+- Лимит — 5 записей в сутки на пользователя, включая черновики (конфигурируется); превышение — 409 `ENTRY_DAILY_LIMIT_EXCEEDED`.
 
 Ответ 201 (сервер заполнил `entryDate` по таймзоне):
 

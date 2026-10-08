@@ -80,6 +80,12 @@ class MetricService(
         metrics.delete(entity)
     }
 
+    @Transactional(readOnly = true)
+    override fun findVisibleByIds(userId: Long, ids: Collection<Long>): List<TrackedMetric> {
+        if (ids.isEmpty()) return emptyList()
+        return metrics.findVisibleByIds(userId, ids).map { it.toModel() }
+    }
+
     private fun updateSystem(
         entity: TrackedMetricEntity,
         command: UpdateTrackedMetric,

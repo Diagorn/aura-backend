@@ -24,6 +24,15 @@ interface TrackedMetricRepository : JpaRepository<TrackedMetricEntity, Long> {
 
     fun findFirstByOwnerUserIdOrderBySortOrderDesc(ownerUserId: Long): TrackedMetricEntity?
 
+    /** Метрики для записей по id: только системные и личные данного пользователя. */
+    @Query(
+        """
+        select m from TrackedMetricEntity m
+        where m.id in :ids and (m.ownerUserId = :userId or m.ownerUserId is null)
+        """,
+    )
+    fun findVisibleByIds(@Param("userId") userId: Long, @Param("ids") ids: Collection<Long>): List<TrackedMetricEntity>
+
     /** Забирает элемент по id или бросает [NotFoundException] (fetch-or-throw — в репозитории). */
     fun requireById(id: Long): TrackedMetricEntity =
         findById(id).orElseThrow { NotFoundException("Метрика не найдена") }

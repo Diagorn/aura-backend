@@ -1,0 +1,49 @@
+databaseChangeLog:
+  - changeSet:
+      id: entry-001-create-entries
+      author: diagorn
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+            - tableExists:
+                schemaName: entry
+                tableName: entries
+      changes:
+        - createTable:
+            schemaName: entry
+            tableName: entries
+            columns:
+              - column: { name: id, type: bigint, autoIncrement: true, constraints: { primaryKey: true, primaryKeyName: pk_entries } }
+              - column: { name: user_id, type: bigint, constraints: { nullable: false } }
+              - column: { name: entry_date, type: date, constraints: { nullable: false } }
+              - column: { name: recorded_at, type: timestamptz, constraints: { nullable: false } }
+              - column: { name: source, type: varchar(16), constraints: { nullable: false } }
+              - column: { name: status, type: varchar(16), constraints: { nullable: false } }
+              - column: { name: note, type: text }
+              - column: { name: created_at, type: timestamptz, constraints: { nullable: false } }
+              - column: { name: updated_at, type: timestamptz, constraints: { nullable: false } }
+        # «Быстрый возврат к дате» — все чек-ины дня одним запросом
+        - createIndex:
+            schemaName: entry
+            indexName: idx_entries_user_date
+            tableName: entries
+            columns:
+              - column: { name: user_id }
+              - column: { name: entry_date }
+        # Календарь месяца: дни с числом записей и наличием завершённых
+        - createIndex:
+            schemaName: entry
+            indexName: idx_entries_user_date_status
+            tableName: entries
+            columns:
+              - column: { name: user_id }
+              - column: { name: entry_date }
+              - column: { name: status }
+        - sql:
+            sql: ALTER TABLE entry.entries ADD CONSTRAINT ck_entries_status CHECK (status IN ('DRAFT', 'COMPLETED'))
+        - sql:
+            sql: ALTER TABLE entry.entries ADD CONSTRAINT ck_entries_source CHECK (source IN ('WEB', 'TELEGRAM'))
+      rollback:
+        - dropTable:
+            schemaName: entry
+            tableName: entries
