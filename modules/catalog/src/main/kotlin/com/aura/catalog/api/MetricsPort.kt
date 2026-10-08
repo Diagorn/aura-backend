@@ -20,4 +20,8 @@ interface MetricsPort {
 
     /** Удаляет свою метрику; чужая/несуществующая — [com.aura.shared.NotFoundException]. */
     fun delete(userId: Long, id: Long)
+
+    /** Метрики по id для использования в записях — со шкалами для валидации значений;
+     *  семантика — [EmotionsPort.findVisibleByIds]. */
+    fun findVisibleByIds(userId: Long, ids: Collection<Long>): List<TrackedMetric>
 }

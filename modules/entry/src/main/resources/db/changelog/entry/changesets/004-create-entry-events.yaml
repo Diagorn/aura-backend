@@ -1,0 +1,43 @@
+databaseChangeLog:
+  - changeSet:
+      id: entry-004-create-entry-events
+      author: diagorn
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+            - tableExists:
+                schemaName: entry
+                tableName: entry_events
+      changes:
+        - createTable:
+            schemaName: entry
+            tableName: entry_events
+            columns:
+              - column: { name: id, type: bigint, autoIncrement: true, constraints: { primaryKey: true, primaryKeyName: pk_entry_events } }
+              - column: { name: entry_id, type: bigint, constraints: { nullable: false } }
+              # ссылка на catalog.events — по id, без FK (чужая схема)
+              - column: { name: event_id, type: bigint, constraints: { nullable: false } }
+        - addForeignKeyConstraint:
+            baseTableSchemaName: entry
+            baseTableName: entry_events
+            baseColumnNames: entry_id
+            referencedTableSchemaName: entry
+            referencedTableName: entries
+            referencedColumnNames: id
+            constraintName: fk_entry_events_entry
+            onDelete: CASCADE
+        - addUniqueConstraint:
+            schemaName: entry
+            tableName: entry_events
+            columnNames: entry_id, event_id
+            constraintName: uq_entry_events_entry_event
+        - createIndex:
+            schemaName: entry
+            indexName: idx_entry_events_event
+            tableName: entry_events
+            columns:
+              - column: { name: event_id }
+      rollback:
+        - dropTable:
+            schemaName: entry
+            tableName: entry_events

@@ -23,3 +23,6 @@ aura:
       access-token-ttl: 15m
       refresh-token-ttl: 30d
       service-token-ttl: 24h
+  entry:
+    # Суточный лимит записей на пользователя, включая черновики (см. docs/domain-model.md)
+    max-per-day: 5

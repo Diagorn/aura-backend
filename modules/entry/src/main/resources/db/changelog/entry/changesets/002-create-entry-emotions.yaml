@@ -1,0 +1,49 @@
+databaseChangeLog:
+  - changeSet:
+      id: entry-002-create-entry-emotions
+      author: diagorn
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+            - tableExists:
+                schemaName: entry
+                tableName: entry_emotions
+      changes:
+        - createTable:
+            schemaName: entry
+            tableName: entry_emotions
+            columns:
+              - column: { name: id, type: bigint, autoIncrement: true, constraints: { primaryKey: true, primaryKeyName: pk_entry_emotions } }
+              - column: { name: entry_id, type: bigint, constraints: { nullable: false } }
+              # ссылка на catalog.emotions — по id, без FK (чужая схема, см. docs/architecture-overview.md §4)
+              - column: { name: emotion_id, type: bigint, constraints: { nullable: false } }
+              - column: { name: intensity, type: integer, constraints: { nullable: false } }
+              - column: { name: influence, type: integer, constraints: { nullable: false } }
+        - addForeignKeyConstraint:
+            baseTableSchemaName: entry
+            baseTableName: entry_emotions
+            baseColumnNames: entry_id
+            referencedTableSchemaName: entry
+            referencedTableName: entries
+            referencedColumnNames: id
+            constraintName: fk_entry_emotions_entry
+            onDelete: CASCADE
+        - addUniqueConstraint:
+            schemaName: entry
+            tableName: entry_emotions
+            columnNames: entry_id, emotion_id
+            constraintName: uq_entry_emotions_entry_emotion
+        - createIndex:
+            schemaName: entry
+            indexName: idx_entry_emotions_emotion
+            tableName: entry_emotions
+            columns:
+              - column: { name: emotion_id }
+        - sql:
+            sql: ALTER TABLE entry.entry_emotions ADD CONSTRAINT ck_entry_emotions_intensity CHECK (intensity BETWEEN 1 AND 5)
+        - sql:
+            sql: ALTER TABLE entry.entry_emotions ADD CONSTRAINT ck_entry_emotions_influence CHECK (influence BETWEEN 1 AND 5)
+      rollback:
+        - dropTable:
+            schemaName: entry
+            tableName: entry_emotions

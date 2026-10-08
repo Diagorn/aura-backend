@@ -70,6 +70,12 @@ class EventService(
         events.delete(entity)
     }
 
+    @Transactional(readOnly = true)
+    override fun findVisibleByIds(userId: Long, ids: Collection<Long>): List<CatalogEvent> {
+        if (ids.isEmpty()) return emptyList()
+        return events.findVisibleByIds(userId, ids).map { it.toModel() }
+    }
+
     private fun nextSortOrder(userId: Long): Int =
         (events.findFirstByOwnerUserIdOrderBySortOrderDesc(userId)?.sortOrder ?: -1) + 1
 }

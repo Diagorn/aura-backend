@@ -8,3 +8,81 @@ itemId:
   schema:
     type: integer
     format: int64
+
+entryId:
+  name: id
+  in: path
+  required: true
+  description: Идентификатор записи (чек-ина)
+  schema:
+    type: integer
+    format: int64
+
+page:
+  name: page
+  in: query
+  required: false
+  description: Номер страницы, начиная с 0
+  schema:
+    type: integer
+    format: int32
+    default: 0
+    minimum: 0
+
+size:
+  name: size
+  in: query
+  required: false
+  description: Размер страницы (максимум 100)
+  schema:
+    type: integer
+    format: int32
+    default: 20
+    minimum: 1
+    maximum: 100
+
+sort:
+  name: sort
+  in: query
+  required: false
+  description: Сортировка в формате поле,направление
+  schema:
+    type: string
+    default: recordedAt,desc
+    example: recordedAt,desc
+
+date:
+  name: date
+  in: query
+  required: false
+  description: Локальная дата пользователя (взаимоисключающа с from/to)
+  schema:
+    type: string
+    format: date
+
+from:
+  name: from
+  in: query
+  required: false
+  description: Начало диапазона локальных дат, включительно (вместе с to)
+  schema:
+    type: string
+    format: date
+
+to:
+  name: to
+  in: query
+  required: false
+  description: Конец диапазона локальных дат, включительно (вместе с from)
+  schema:
+    type: string
+    format: date
+
+month:
+  name: month
+  in: query
+  required: false
+  description: Месяц в формате yyyy-MM; не передан — текущий месяц в таймзоне пользователя
+  schema:
+    type: string
+    example: '2026-10'

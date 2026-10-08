@@ -24,6 +24,15 @@ interface EventRepository : JpaRepository<EventEntity, Long> {
 
     fun findFirstByOwnerUserIdOrderBySortOrderDesc(ownerUserId: Long): EventEntity?
 
+    /** События для записей по id (события всегда персональны). */
+    @Query(
+        """
+        select e from EventEntity e
+        where e.id in :ids and e.ownerUserId = :userId
+        """,
+    )
+    fun findVisibleByIds(@Param("userId") userId: Long, @Param("ids") ids: Collection<Long>): List<EventEntity>
+
     /** Забирает элемент по id или бросает [NotFoundException] (fetch-or-throw — в репозитории). */
     fun requireById(id: Long): EventEntity = findById(id).orElseThrow { NotFoundException("Событие не найдено") }
 }

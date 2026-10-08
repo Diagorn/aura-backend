@@ -75,6 +75,12 @@ class EmotionService(
         emotions.delete(entity)
     }
 
+    @Transactional(readOnly = true)
+    override fun findVisibleByIds(userId: Long, ids: Collection<Long>): List<Emotion> {
+        if (ids.isEmpty()) return emptyList()
+        return emotions.findVisibleByIds(userId, ids).map { it.toModel() }
+    }
+
     /** Системная: админ правит строку; обычный пользователь — только персональное скрытие через {isActive}. */
     private fun updateSystem(entity: EmotionEntity, command: UpdateEmotion, isAdmin: Boolean, userId: Long): Emotion {
         if (isAdmin) {

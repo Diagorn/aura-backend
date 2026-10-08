@@ -24,6 +24,15 @@ interface FactorRepository : JpaRepository<FactorEntity, Long> {
 
     fun findFirstByOwnerUserIdOrderBySortOrderDesc(ownerUserId: Long): FactorEntity?
 
+    /** Факторы для записей по id: только системные и личные данного пользователя. */
+    @Query(
+        """
+        select f from FactorEntity f
+        where f.id in :ids and (f.ownerUserId = :userId or f.ownerUserId is null)
+        """,
+    )
+    fun findVisibleByIds(@Param("userId") userId: Long, @Param("ids") ids: Collection<Long>): List<FactorEntity>
+
     /** Забирает элемент по id или бросает [NotFoundException] (fetch-or-throw — в репозитории). */
     fun requireById(id: Long): FactorEntity = findById(id).orElseThrow { NotFoundException("Фактор не найден") }
 }

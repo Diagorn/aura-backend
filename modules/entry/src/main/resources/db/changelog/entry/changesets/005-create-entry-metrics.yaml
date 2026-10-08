@@ -1,0 +1,45 @@
+databaseChangeLog:
+  - changeSet:
+      id: entry-005-create-entry-metrics
+      author: diagorn
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+            - tableExists:
+                schemaName: entry
+                tableName: entry_metrics
+      changes:
+        - createTable:
+            schemaName: entry
+            tableName: entry_metrics
+            columns:
+              - column: { name: id, type: bigint, autoIncrement: true, constraints: { primaryKey: true, primaryKeyName: pk_entry_metrics } }
+              - column: { name: entry_id, type: bigint, constraints: { nullable: false } }
+              # ссылка на catalog.tracked_metrics — по id, без FK (чужая схема);
+              # значение валидируется сервисом по шкале конкретной метрики
+              - column: { name: metric_id, type: bigint, constraints: { nullable: false } }
+              - column: { name: value, type: numeric, constraints: { nullable: false } }
+        - addForeignKeyConstraint:
+            baseTableSchemaName: entry
+            baseTableName: entry_metrics
+            baseColumnNames: entry_id
+            referencedTableSchemaName: entry
+            referencedTableName: entries
+            referencedColumnNames: id
+            constraintName: fk_entry_metrics_entry
+            onDelete: CASCADE
+        - addUniqueConstraint:
+            schemaName: entry
+            tableName: entry_metrics
+            columnNames: entry_id, metric_id
+            constraintName: uq_entry_metrics_entry_metric
+        - createIndex:
+            schemaName: entry
+            indexName: idx_entry_metrics_metric
+            tableName: entry_metrics
+            columns:
+              - column: { name: metric_id }
+      rollback:
+        - dropTable:
+            schemaName: entry
+            tableName: entry_metrics

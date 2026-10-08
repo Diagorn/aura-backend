@@ -72,6 +72,12 @@ class FactorService(
         factors.delete(entity)
     }
 
+    @Transactional(readOnly = true)
+    override fun findVisibleByIds(userId: Long, ids: Collection<Long>): List<Factor> {
+        if (ids.isEmpty()) return emptyList()
+        return factors.findVisibleByIds(userId, ids).map { it.toModel() }
+    }
+
     private fun updateSystem(entity: FactorEntity, command: UpdateFactor, isAdmin: Boolean, userId: Long): Factor {
         if (isAdmin) {
             return applyUpdate(entity, command) { factors.existsByOwnerUserIdIsNullAndName(it) }

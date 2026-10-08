@@ -1,0 +1,315 @@
+# Записи чек-ина (entries): одна запись — эмоции + факторы + события + метрики,
+# сохранённые одной командой или постепенно как DRAFT (см. docs/domain-model.md).
+
+EntryStatus:
+  type: string
+  enum:
+    - DRAFT
+    - COMPLETED
+  description: >
+    DRAFT — начатый, но не завершённый чек-ин (может быть пустым);
+    COMPLETED — завершённый: требуется минимум одна эмоция.
+
+EntrySource:
+  type: string
+  enum:
+    - WEB
+    - TELEGRAM
+  description: Клиент, с которого создана запись; не передан — WEB.
+
+EntryEmotionInput:
+  type: object
+  required:
+    - emotionId
+    - intensity
+    - influence
+  properties:
+    emotionId:
+      type: integer
+      format: int64
+    intensity:
+      type: integer
+      minimum: 1
+      maximum: 5
+      description: Сила эмоции, шкала 1–5
+    influence:
+      type: integer
+      minimum: 1
+      maximum: 5
+      description: Субъективное влияние на состояние, шкала 1–5
+
+EntryFactorInput:
+  type: object
+  required:
+    - factorId
+  properties:
+    factorId:
+      type: integer
+      format: int64
+    intensity:
+      type: integer
+      minimum: 1
+      maximum: 5
+      nullable: true
+      description: Опциональная выраженность фактора, шкала 1–5
+
+EntryEventInput:
+  type: object
+  required:
+    - eventId
+  properties:
+    eventId:
+      type: integer
+      format: int64
+
+EntryMetricInput:
+  type: object
+  required:
+    - metricId
+    - value
+  properties:
+    metricId:
+      type: integer
+      format: int64
+    value:
+      type: number
+      description: Значение в пределах шкалы своей метрики (minValue..maxValue)
+
+CreateEntryRequest:
+  type: object
+  required:
+    - status
+  properties:
+    status:
+      $ref: '#/EntryStatus'
+    source:
+      $ref: '#/EntrySource'
+    emotions:
+      type: array
+      description: Для COMPLETED — минимум одна; для DRAFT может быть пусто
+      items:
+        $ref: '#/EntryEmotionInput'
+    factors:
+      type: array
+      items:
+        $ref: '#/EntryFactorInput'
+    events:
+      type: array
+      items:
+        $ref: '#/EntryEventInput'
+    metrics:
+      type: array
+      items:
+        $ref: '#/EntryMetricInput'
+    note:
+      type: string
+      maxLength: 10000
+      nullable: true
+      description: Краткая заметка к записи
+
+UpdateEntryRequest:
+  type: object
+  description: >
+    PATCH-семантика: изменяются только переданные поля. Переданная коллекция
+    (emotions/factors/events/metrics) заменяется целиком; отсутствующая — не меняется.
+    Переход COMPLETED -> DRAFT запрещён. entryDate и recordedAt сервер не меняет.
+  properties:
+    status:
+      $ref: '#/EntryStatus'
+    source:
+      $ref: '#/EntrySource'
+    emotions:
+      type: array
+      items:
+        $ref: '#/EntryEmotionInput'
+    factors:
+      type: array
+      items:
+        $ref: '#/EntryFactorInput'
+    events:
+      type: array
+      items:
+        $ref: '#/EntryEventInput'
+    metrics:
+      type: array
+      items:
+        $ref: '#/EntryMetricInput'
+    note:
+      type: string
+      maxLength: 10000
+      nullable: true
+      description: Чтобы очистить — пустая строка
+
+EntryEmotionItem:
+  type: object
+  required:
+    - emotionId
+    - name
+    - intensity
+    - influence
+  properties:
+    emotionId:
+      type: integer
+      format: int64
+    name:
+      type: string
+      description: Имя эмоции из справочника на момент чтения
+    intensity:
+      type: integer
+    influence:
+      type: integer
+
+EntryFactorItem:
+  type: object
+  required:
+    - factorId
+    - name
+  properties:
+    factorId:
+      type: integer
+      format: int64
+    name:
+      type: string
+    intensity:
+      type: integer
+      nullable: true
+
+EntryEventItem:
+  type: object
+  required:
+    - eventId
+    - name
+  properties:
+    eventId:
+      type: integer
+      format: int64
+    name:
+      type: string
+
+EntryMetricItem:
+  type: object
+  required:
+    - metricId
+    - name
+    - value
+  properties:
+    metricId:
+      type: integer
+      format: int64
+    name:
+      type: string
+    value:
+      type: number
+
+EntryResponse:
+  type: object
+  required:
+    - id
+    - userId
+    - entryDate
+    - recordedAt
+    - source
+    - status
+    - emotions
+    - factors
+    - events
+    - metrics
+  properties:
+    id:
+      type: integer
+      format: int64
+    userId:
+      type: integer
+      format: int64
+    entryDate:
+      type: string
+      format: date
+      description: Локальная дата пользователя («за какое число»), вычислена сервером по его таймзоне
+    recordedAt:
+      type: string
+      format: date-time
+      description: Момент сохранения, UTC
+    source:
+      $ref: '#/EntrySource'
+    status:
+      $ref: '#/EntryStatus'
+    emotions:
+      type: array
+      items:
+        $ref: '#/EntryEmotionItem'
+    factors:
+      type: array
+      items:
+        $ref: '#/EntryFactorItem'
+    events:
+      type: array
+      items:
+        $ref: '#/EntryEventItem'
+    metrics:
+      type: array
+      items:
+        $ref: '#/EntryMetricItem'
+    note:
+      type: string
+      maxLength: 10000
+      nullable: true
+
+EntryPage:
+  type: object
+  required:
+    - items
+    - page
+    - size
+    - totalElements
+    - totalPages
+  properties:
+    items:
+      type: array
+      items:
+        $ref: '#/EntryResponse'
+    page:
+      type: integer
+      format: int32
+    size:
+      type: integer
+      format: int32
+    totalElements:
+      type: integer
+      format: int64
+    totalPages:
+      type: integer
+      format: int32
+
+CalendarDay:
+  type: object
+  required:
+    - date
+    - entriesCount
+    - hasCompleted
+  properties:
+    date:
+      type: string
+      format: date
+    entriesCount:
+      type: integer
+      format: int32
+      description: Всего записей за день, включая черновики
+    hasCompleted:
+      type: boolean
+      description: Есть ли хотя бы одна завершённая запись
+
+CalendarResponse:
+  type: object
+  required:
+    - month
+    - days
+  properties:
+    month:
+      type: string
+      description: Месяц в формате yyyy-MM
+      example: '2026-10'
+    days:
+      type: array
+      description: Только дни, в которые есть хотя бы одна запись
+      items:
+        $ref: '#/CalendarDay'

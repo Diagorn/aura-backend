@@ -21,6 +21,10 @@ tags:
       Справочники чек-ина: эмоции, факторы, события, отслеживаемые метрики.
       Паттерн «системное + персональное»: системные пресеты общие, править их
       могут только админы; пользователи создают свои и деактивируют свои.
+  - name: entries
+    description: >
+      Записи чек-ина: эмоции с интенсивностью и влиянием, факторы, события, метрики.
+      Сохранение одной командой или DRAFT-циклом; навигация по локальным датам пользователя.
   - name: internal
     description: >
       Внутренний API для Telegram-бота; аутентификация — сервисный JWT
@@ -58,6 +62,12 @@ paths:
     $ref: './paths/catalog.yaml#/metrics'
   /api/v1/catalog/metrics/{id}:
     $ref: './paths/catalog.yaml#/metric'
+  /api/v1/entries:
+    $ref: './paths/entries.yaml#/entries'
+  /api/v1/entries/calendar:
+    $ref: './paths/entries.yaml#/calendar'
+  /api/v1/entries/{id}:
+    $ref: './paths/entries.yaml#/entry'
   /internal/v1/auth/service-token:
     $ref: './paths/internal.yaml#/serviceToken'
   /internal/v1/auth/telegram/link:
