@@ -1,0 +1,10 @@
+# Переиспользуемые параметры путей (см. docs/spec-first-workflow.md).
+
+itemId:
+  name: id
+  in: path
+  required: true
+  description: Идентификатор элемента справочника
+  schema:
+    type: integer
+    format: int64

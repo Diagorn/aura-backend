@@ -1,0 +1,30 @@
+databaseChangeLog:
+  - changeSet:
+      id: catalog-003-create-events
+      author: Diagorn
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+            - tableExists:
+                schemaName: catalog
+                tableName: events
+      changes:
+        - createTable:
+            schemaName: catalog
+            tableName: events
+            columns:
+              - column: { name: id, type: bigint, autoIncrement: true, constraints: { primaryKey: true, primaryKeyName: pk_events } }
+              - column: { name: owner_user_id, type: bigint }
+              - column: { name: name, type: varchar(100), constraints: { nullable: false } }
+              - column: { name: icon, type: varchar(128) }
+              - column: { name: is_active, type: boolean, defaultValueBoolean: true, constraints: { nullable: false } }
+              - column: { name: sort_order, type: integer, defaultValueNumeric: 0, constraints: { nullable: false } }
+        - addUniqueConstraint:
+            schemaName: catalog
+            tableName: events
+            columnNames: owner_user_id, name
+            constraintName: uq_events_owner_name
+      rollback:
+        - dropTable:
+            schemaName: catalog
+            tableName: events

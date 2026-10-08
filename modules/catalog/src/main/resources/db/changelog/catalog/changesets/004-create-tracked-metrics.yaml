@@ -1,0 +1,32 @@
+databaseChangeLog:
+  - changeSet:
+      id: catalog-004-create-tracked-metrics
+      author: Diagorn
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+            - tableExists:
+                schemaName: catalog
+                tableName: tracked_metrics
+      changes:
+        - createTable:
+            schemaName: catalog
+            tableName: tracked_metrics
+            columns:
+              - column: { name: id, type: bigint, autoIncrement: true, constraints: { primaryKey: true, primaryKeyName: pk_tracked_metrics } }
+              - column: { name: owner_user_id, type: bigint }
+              - column: { name: name, type: varchar(100), constraints: { nullable: false } }
+              - column: { name: min_value, type: numeric, defaultValueNumeric: 1, constraints: { nullable: false } }
+              - column: { name: max_value, type: numeric, defaultValueNumeric: 5, constraints: { nullable: false } }
+              - column: { name: unit, type: varchar(16) }
+              - column: { name: is_active, type: boolean, defaultValueBoolean: true, constraints: { nullable: false } }
+              - column: { name: sort_order, type: integer, defaultValueNumeric: 0, constraints: { nullable: false } }
+        - addUniqueConstraint:
+            schemaName: catalog
+            tableName: tracked_metrics
+            columnNames: owner_user_id, name
+            constraintName: uq_tracked_metrics_owner_name
+      rollback:
+        - dropTable:
+            schemaName: catalog
+            tableName: tracked_metrics

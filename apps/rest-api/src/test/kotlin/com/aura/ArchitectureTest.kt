@@ -32,6 +32,15 @@ class ArchitectureTest {
     }
 
     @Test
+    fun `catalog internals are not reachable from outside catalog`() {
+        noClasses()
+            .that().resideOutsideOfPackage("com.aura.catalog..")
+            .should().dependOnClassesThat().resideInAPackage("com.aura.catalog.internal..")
+            .because("модуль публикует только пакет com.aura.catalog.api")
+            .check(classes)
+    }
+
+    @Test
     fun `user internals are not reachable from outside user`() {
         noClasses()
             .that().resideOutsideOfPackage("com.aura.user..")
@@ -43,7 +52,7 @@ class ArchitectureTest {
     @Test
     fun `modules must not depend on app layers`() {
         noClasses()
-            .that().resideInAnyPackage("com.aura.auth..", "com.aura.user..", "com.aura.shared..")
+            .that().resideInAnyPackage("com.aura.auth..", "com.aura.user..", "com.aura.catalog..", "com.aura.shared..")
             .should().dependOnClassesThat().resideInAnyPackage("com.aura.web..", "com.aura.security..")
             .because("зависимость направлена только от приложения к модулям")
             .check(classes)
