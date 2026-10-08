@@ -923,14 +923,14 @@
 		},
 		{
 			"name": "Catalog",
-			"description": "Справочники чек-ина (этап 2.1): персональные CRUD по эмоциям, факторам, событиям и метрикам.\nПаттерн «системное + персональное»: имя уникально в рамках пользователя (409), чужое — 404 (существование не раскрываем).\nСистемные пресеты и админ-права — этап 2.2.\n\nСкрипты сохраняют созданные id: emotionId, factorId, eventId, metricId — их используют Update/Delete.",
+			"description": "Справочники чек-ина: персональные CRUD по эмоциям, факторам, событиям и метрикам + системные пресеты.\nПаттерн «системное + персональное»: имя уникально в рамках пользователя (409), чужое — 404 (существование не раскрываем).\nСистемные пресеты (system=true) общие: правка полей — только ADMIN; {isActive:false} в PATCH системного скрывает его для вас (пер-пользовательское скрытие), {isActive:true} — возвращает. Системные не удаляются никем (403).\n\nСкрипты сохраняют созданные id: emotionId, factorId, eventId, metricId — их используют Update/Delete. Для админ-примеров нужен токен пользователя с ролью ADMIN.",
 			"item": [
 				{
 					"name": "Emotions",
-					"description": "Эмоции: цвет RGB, иконка.",
+					"description": "Эмоции: цвет RGB, иконка. Системные пресеты из seed видны всем новым пользователям.",
 					"item": [
 						{
-							"name": "List эмоции",
+							"name": "List эмоций",
 							"request": {
 								"method": "GET",
 								"auth": {
@@ -944,7 +944,7 @@
 									]
 								},
 								"url": "{{baseUrl}}/api/v1/catalog/emotions",
-								"description": "Системные (с этапа 2.2) и персональные эмоции, сортировка по sortOrder.\nПо умолчанию деактивированные скрыты; includeInactive=true добавляет их."
+								"description": "Системные пресеты и персональные эмоции, сортировка по sortOrder.\nДеактивированные персональные и скрытые вами системные — только с includeInactive=true (isActive=false)."
 							},
 							"response": [
 								{
@@ -973,7 +973,7 @@
 										}
 									],
 									"cookie": [],
-									"body": "[\n  {\n    \"id\": 1,\n    \"name\": \"Радость\",\n    \"isActive\": true,\n    \"sortOrder\": 0,\n    \"system\": true,\n    \"color\": 16776960,\n    \"icon\": null\n  },\n  {\n    \"id\": 55,\n    \"name\": \"Спокойствие\",\n    \"isActive\": true,\n    \"sortOrder\": 1,\n    \"system\": false,\n    \"color\": 65280,\n    \"icon\": \"calm\"\n  }\n]"
+									"body": "[\n  {\n    \"id\": 1,\n    \"name\": \"Радость\",\n    \"isActive\": true,\n    \"sortOrder\": 0,\n    \"system\": true,\n    \"color\": null,\n    \"icon\": null\n  },\n  {\n    \"id\": 7,\n    \"name\": \"Тревога\",\n    \"isActive\": true,\n    \"sortOrder\": 6,\n    \"system\": true,\n    \"color\": null,\n    \"icon\": null\n  },\n  {\n    \"id\": 55,\n    \"name\": \"Спокойствие личное\",\n    \"isActive\": true,\n    \"sortOrder\": 0,\n    \"system\": false,\n    \"color\": 65280,\n    \"icon\": \"calm\"\n  }\n]"
 								},
 								{
 									"name": "401 — нет/просрочен access-токен",
@@ -1006,7 +1006,7 @@
 							]
 						},
 						{
-							"name": "Create эмоци",
+							"name": "Create эмоцию",
 							"request": {
 								"method": "POST",
 								"auth": {
@@ -1185,7 +1185,7 @@
 							]
 						},
 						{
-							"name": "Update эмоци",
+							"name": "Update эмоцию",
 							"request": {
 								"method": "PATCH",
 								"auth": {
@@ -1214,7 +1214,7 @@
 									}
 								},
 								"url": "{{baseUrl}}/api/v1/catalog/emotions/{emotionId}",
-								"description": "PATCH-семантика: изменяются только переданные поля. isActive=false — деактивация (скрывается из списка по умолчанию).\n404 — чужой или несуществующий элемент; системные элементы правят только админы (этап 2.2 — 403)."
+								"description": "PATCH-семантика: изменяются только переданные поля.\nПерсональная — правится владельцем. Системная: {isActive:false|true} — скрыть/вернуть для себя;\nправка полей — только ADMIN, иначе 403. Чужая/несуществующая — 404."
 							},
 							"response": [
 								{
@@ -1302,11 +1302,140 @@
 									],
 									"cookie": [],
 									"body": "{\n  \"type\": \"https://aura.example.com/problems/not-found\",\n  \"title\": \"Not Found\",\n  \"status\": 404,\n  \"detail\": \"Элемент не найден\",\n  \"instance\": \"/api/v1/catalog/emotions/{emotionId}\",\n  \"code\": \"NOT_FOUND\"\n}"
+								},
+								{
+									"name": "200 — системная эмоция скрыта для вас",
+									"originalRequest": {
+										"method": "PATCH",
+										"auth": {
+											"type": "bearer",
+											"bearer": [
+												{
+													"key": "token",
+													"value": "{{accessToken}}",
+													"type": "string"
+												}
+											]
+										},
+										"header": [
+											{
+												"key": "Content-Type",
+												"value": "application/json"
+											}
+										],
+										"body": {
+											"mode": "raw",
+											"raw": "{\n  \"isActive\": false\n}",
+											"options": {
+												"raw": {
+													"language": "json"
+												}
+											}
+										},
+										"url": "{{baseUrl}}/api/v1/catalog/emotions/7"
+									},
+									"status": "OK",
+									"code": 200,
+									"_postman_previewlanguage": "json",
+									"header": [
+										{
+											"key": "Content-Type",
+											"value": "application/json"
+										}
+									],
+									"cookie": [],
+									"body": "{\n  \"id\": 7,\n  \"name\": \"Тревога\",\n  \"isActive\": false,\n  \"sortOrder\": 6,\n  \"system\": true,\n  \"color\": null,\n  \"icon\": null\n}"
+								},
+								{
+									"name": "403 — правка полей системной не админом",
+									"originalRequest": {
+										"method": "PATCH",
+										"auth": {
+											"type": "bearer",
+											"bearer": [
+												{
+													"key": "token",
+													"value": "{{accessToken}}",
+													"type": "string"
+												}
+											]
+										},
+										"header": [
+											{
+												"key": "Content-Type",
+												"value": "application/json"
+											}
+										],
+										"body": {
+											"mode": "raw",
+											"raw": "{\n  \"name\": \"Своя тревога\"\n}",
+											"options": {
+												"raw": {
+													"language": "json"
+												}
+											}
+										},
+										"url": "{{baseUrl}}/api/v1/catalog/emotions/7"
+									},
+									"status": "Forbidden",
+									"code": 403,
+									"_postman_previewlanguage": "json",
+									"header": [
+										{
+											"key": "Content-Type",
+											"value": "application/problem+json"
+										}
+									],
+									"cookie": [],
+									"body": "{\n  \"type\": \"https://aura.example.com/problems/system-item-forbidden\",\n  \"title\": \"Forbidden\",\n  \"status\": 403,\n  \"detail\": \"Системные элементы справочника может править только администратор\",\n  \"instance\": \"/api/v1/catalog/emotions/7\",\n  \"code\": \"SYSTEM_ITEM_FORBIDDEN\"\n}"
+								},
+								{
+									"name": "200 — ADMIN правит системную (нужен токен с ролью ADMIN)",
+									"originalRequest": {
+										"method": "PATCH",
+										"auth": {
+											"type": "bearer",
+											"bearer": [
+												{
+													"key": "token",
+													"value": "{{accessToken}}",
+													"type": "string"
+												}
+											]
+										},
+										"header": [
+											{
+												"key": "Content-Type",
+												"value": "application/json"
+											}
+										],
+										"body": {
+											"mode": "raw",
+											"raw": "{\n  \"name\": \"Тревога\",\n  \"color\": 9112529\n}",
+											"options": {
+												"raw": {
+													"language": "json"
+												}
+											}
+										},
+										"url": "{{baseUrl}}/api/v1/catalog/emotions/7"
+									},
+									"status": "OK",
+									"code": 200,
+									"_postman_previewlanguage": "json",
+									"header": [
+										{
+											"key": "Content-Type",
+											"value": "application/json"
+										}
+									],
+									"cookie": [],
+									"body": "{\n  \"id\": 7,\n  \"name\": \"Тревога\",\n  \"isActive\": true,\n  \"sortOrder\": 6,\n  \"system\": true,\n  \"color\": 9112529,\n  \"icon\": null\n}"
 								}
 							]
 						},
 						{
-							"name": "Delete эмоци",
+							"name": "Delete эмоцию",
 							"request": {
 								"method": "DELETE",
 								"auth": {
@@ -1396,6 +1525,40 @@
 									],
 									"cookie": [],
 									"body": "{\n  \"type\": \"https://aura.example.com/problems/not-found\",\n  \"title\": \"Not Found\",\n  \"status\": 404,\n  \"detail\": \"Элемент не найден\",\n  \"instance\": \"/api/v1/catalog/emotions/{emotionId}\",\n  \"code\": \"NOT_FOUND\"\n}"
+								},
+								{
+									"name": "403 — системный элемент не удаляется никем",
+									"originalRequest": {
+										"method": "DELETE",
+										"auth": {
+											"type": "bearer",
+											"bearer": [
+												{
+													"key": "token",
+													"value": "{{accessToken}}",
+													"type": "string"
+												}
+											]
+										},
+										"header": [
+											{
+												"key": "Content-Type",
+												"value": "application/json"
+											}
+										],
+										"url": "{{baseUrl}}/api/v1/catalog/emotions/1"
+									},
+									"status": "Forbidden",
+									"code": 403,
+									"_postman_previewlanguage": "json",
+									"header": [
+										{
+											"key": "Content-Type",
+											"value": "application/problem+json"
+										}
+									],
+									"cookie": [],
+									"body": "{\n  \"type\": \"https://aura.example.com/problems/system-item-forbidden\",\n  \"title\": \"Forbidden\",\n  \"status\": 403,\n  \"detail\": \"Системные эмоции удалять нельзя — деактивируйте или скройте их\",\n  \"instance\": \"/api/v1/catalog/emotions/1\",\n  \"code\": \"SYSTEM_ITEM_FORBIDDEN\"\n}"
 								}
 							]
 						}
@@ -1403,10 +1566,10 @@
 				},
 				{
 					"name": "Factors",
-					"description": "Факторы — причина/контекст состояния (сон, работа, погода…).",
+					"description": "Факторы — причина/контекст состояния (сон, работа, погода…). Системные пресеты из seed.",
 					"item": [
 						{
-							"name": "List факторы",
+							"name": "List факторов",
 							"request": {
 								"method": "GET",
 								"auth": {
@@ -1872,6 +2035,40 @@
 									],
 									"cookie": [],
 									"body": "{\n  \"type\": \"https://aura.example.com/problems/not-found\",\n  \"title\": \"Not Found\",\n  \"status\": 404,\n  \"detail\": \"Элемент не найден\",\n  \"instance\": \"/api/v1/catalog/factors/{factorId}\",\n  \"code\": \"NOT_FOUND\"\n}"
+								},
+								{
+									"name": "403 — системный элемент не удаляется никем",
+									"originalRequest": {
+										"method": "DELETE",
+										"auth": {
+											"type": "bearer",
+											"bearer": [
+												{
+													"key": "token",
+													"value": "{{accessToken}}",
+													"type": "string"
+												}
+											]
+										},
+										"header": [
+											{
+												"key": "Content-Type",
+												"value": "application/json"
+											}
+										],
+										"url": "{{baseUrl}}/api/v1/catalog/factors/1"
+									},
+									"status": "Forbidden",
+									"code": 403,
+									"_postman_previewlanguage": "json",
+									"header": [
+										{
+											"key": "Content-Type",
+											"value": "application/problem+json"
+										}
+									],
+									"cookie": [],
+									"body": "{\n  \"type\": \"https://aura.example.com/problems/system-item-forbidden\",\n  \"title\": \"Forbidden\",\n  \"status\": 403,\n  \"detail\": \"Системные факторы удалять нельзя — деактивируйте или скройте их\",\n  \"instance\": \"/api/v1/catalog/factors/1\",\n  \"code\": \"SYSTEM_ITEM_FORBIDDEN\"\n}"
 								}
 							]
 						}
@@ -1882,7 +2079,7 @@
 					"description": "События — конкретные жизненные события; системных пресетов нет, справочник строго персональный.",
 					"item": [
 						{
-							"name": "List события",
+							"name": "List событий",
 							"request": {
 								"method": "GET",
 								"auth": {
@@ -1958,7 +2155,7 @@
 							]
 						},
 						{
-							"name": "Create события",
+							"name": "Create событие",
 							"request": {
 								"method": "POST",
 								"auth": {
@@ -2137,7 +2334,7 @@
 							]
 						},
 						{
-							"name": "Update события",
+							"name": "Update событие",
 							"request": {
 								"method": "PATCH",
 								"auth": {
@@ -2258,7 +2455,7 @@
 							]
 						},
 						{
-							"name": "Delete события",
+							"name": "Delete событие",
 							"request": {
 								"method": "DELETE",
 								"auth": {
@@ -2348,6 +2545,40 @@
 									],
 									"cookie": [],
 									"body": "{\n  \"type\": \"https://aura.example.com/problems/not-found\",\n  \"title\": \"Not Found\",\n  \"status\": 404,\n  \"detail\": \"Элемент не найден\",\n  \"instance\": \"/api/v1/catalog/events/{eventId}\",\n  \"code\": \"NOT_FOUND\"\n}"
+								},
+								{
+									"name": "403 — системный элемент не удаляется никем",
+									"originalRequest": {
+										"method": "DELETE",
+										"auth": {
+											"type": "bearer",
+											"bearer": [
+												{
+													"key": "token",
+													"value": "{{accessToken}}",
+													"type": "string"
+												}
+											]
+										},
+										"header": [
+											{
+												"key": "Content-Type",
+												"value": "application/json"
+											}
+										],
+										"url": "{{baseUrl}}/api/v1/catalog/events/1"
+									},
+									"status": "Forbidden",
+									"code": 403,
+									"_postman_previewlanguage": "json",
+									"header": [
+										{
+											"key": "Content-Type",
+											"value": "application/problem+json"
+										}
+									],
+									"cookie": [],
+									"body": "{\n  \"type\": \"https://aura.example.com/problems/system-item-forbidden\",\n  \"title\": \"Forbidden\",\n  \"status\": 403,\n  \"detail\": \"Системные события удалять нельзя — деактивируйте или скройте их\",\n  \"instance\": \"/api/v1/catalog/events/1\",\n  \"code\": \"SYSTEM_ITEM_FORBIDDEN\"\n}"
 								}
 							]
 						}
@@ -2355,10 +2586,10 @@
 				},
 				{
 					"name": "Metrics",
-					"description": "Отслеживаемые метрики со шкалой (настроение, энергия, тревожность…). Границы шкалы по умолчанию 1 и 5.",
+					"description": "Отслеживаемые метрики со шкалой (настроение, энергия, тревожность…). Системные пресеты из seed, шкала 1–5.",
 					"item": [
 						{
-							"name": "List метрики",
+							"name": "List метрик",
 							"request": {
 								"method": "GET",
 								"auth": {
@@ -2434,7 +2665,7 @@
 							]
 						},
 						{
-							"name": "Create метрик",
+							"name": "Create метрику",
 							"request": {
 								"method": "POST",
 								"auth": {
@@ -2656,7 +2887,7 @@
 							]
 						},
 						{
-							"name": "Update метрик",
+							"name": "Update метрику",
 							"request": {
 								"method": "PATCH",
 								"auth": {
@@ -2777,7 +3008,7 @@
 							]
 						},
 						{
-							"name": "Delete метрик",
+							"name": "Delete метрику",
 							"request": {
 								"method": "DELETE",
 								"auth": {
@@ -2867,6 +3098,40 @@
 									],
 									"cookie": [],
 									"body": "{\n  \"type\": \"https://aura.example.com/problems/not-found\",\n  \"title\": \"Not Found\",\n  \"status\": 404,\n  \"detail\": \"Элемент не найден\",\n  \"instance\": \"/api/v1/catalog/metrics/{metricId}\",\n  \"code\": \"NOT_FOUND\"\n}"
+								},
+								{
+									"name": "403 — системный элемент не удаляется никем",
+									"originalRequest": {
+										"method": "DELETE",
+										"auth": {
+											"type": "bearer",
+											"bearer": [
+												{
+													"key": "token",
+													"value": "{{accessToken}}",
+													"type": "string"
+												}
+											]
+										},
+										"header": [
+											{
+												"key": "Content-Type",
+												"value": "application/json"
+											}
+										],
+										"url": "{{baseUrl}}/api/v1/catalog/metrics/1"
+									},
+									"status": "Forbidden",
+									"code": 403,
+									"_postman_previewlanguage": "json",
+									"header": [
+										{
+											"key": "Content-Type",
+											"value": "application/problem+json"
+										}
+									],
+									"cookie": [],
+									"body": "{\n  \"type\": \"https://aura.example.com/problems/system-item-forbidden\",\n  \"title\": \"Forbidden\",\n  \"status\": 403,\n  \"detail\": \"Системные метрики удалять нельзя — деактивируйте или скройте их\",\n  \"instance\": \"/api/v1/catalog/metrics/1\",\n  \"code\": \"SYSTEM_ITEM_FORBIDDEN\"\n}"
 								}
 							]
 						}

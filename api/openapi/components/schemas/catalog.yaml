@@ -26,14 +26,16 @@ EmotionResponse:
       nullable: true
     isActive:
       type: boolean
-      description: false — деактивирована пользователем и по умолчанию не отдаётся в списке
+      description: false — деактивирована пользователем или скрыта (системная); по умолчанию не отдаётся в списке
     sortOrder:
       type: integer
       format: int32
       description: Порядок в списке; меньше — выше
     system:
       type: boolean
-      description: true — системный пресет, общий для всех; править нельзя (см. PATCH/DELETE)
+      description: >
+        true — системный пресет, общий для всех: правка полей — только ADMIN,
+        а {isActive:false} в PATCH скрывает его для текущего пользователя
 
 FactorResponse:
   type: object
@@ -56,14 +58,16 @@ FactorResponse:
       nullable: true
     isActive:
       type: boolean
-      description: false — деактивирован пользователем и по умолчанию не отдаётся в списке
+      description: false — деактивирован пользователем или скрыт (системный); по умолчанию не отдаётся в списке
     sortOrder:
       type: integer
       format: int32
       description: Порядок в списке; меньше — выше
     system:
       type: boolean
-      description: true — системный пресет, общий для всех; править нельзя (см. PATCH/DELETE)
+      description: >
+        true — системный пресет, общий для всех: правка полей — только ADMIN,
+        а {isActive:false} в PATCH скрывает его для текущего пользователя
 
 EventResponse:
   type: object
@@ -86,14 +90,16 @@ EventResponse:
       nullable: true
     isActive:
       type: boolean
-      description: false — деактивировано пользователем и по умолчанию не отдаётся в списке
+      description: false — деактивировано пользователем или скрыто (системное); по умолчанию не отдаётся в списке
     sortOrder:
       type: integer
       format: int32
       description: Порядок в списке; меньше — выше
     system:
       type: boolean
-      description: true — системный пресет, общий для всех; править нельзя (см. PATCH/DELETE)
+      description: >
+        true — системный пресет, общий для всех: правка полей — только ADMIN,
+        а {isActive:false} в PATCH скрывает его для текущего пользователя
 
 MetricResponse:
   type: object
@@ -125,14 +131,16 @@ MetricResponse:
       nullable: true
     isActive:
       type: boolean
-      description: false — деактивирована пользователем и по умолчанию не отдаётся в списке
+      description: false — деактивирована пользователем или скрыта (системная); по умолчанию не отдаётся в списке
     sortOrder:
       type: integer
       format: int32
       description: Порядок в списке; меньше — выше
     system:
       type: boolean
-      description: true — системный пресет, общий для всех; править нельзя (см. PATCH/DELETE)
+      description: >
+        true — системный пресет, общий для всех: правка полей — только ADMIN,
+        а {isActive:false} в PATCH скрывает его для текущего пользователя
 
 CreateEmotionRequest:
   type: object

@@ -13,8 +13,9 @@ interface EventsPort {
     /** Создаёт персональное событие; дубль имени — [CatalogItemNameAlreadyExistsException]. */
     fun create(userId: Long, command: CreateCatalogEvent): CatalogEvent
 
-    /** Правит своё событие (PATCH: null поле не менять); чужое/несуществующее — [com.aura.shared.NotFoundException]. */
-    fun update(userId: Long, id: Long, command: UpdateCatalogEvent): CatalogEvent
+    /** Правит своё событие (PATCH: null поле не менять); чужое/несуществующее — [com.aura.shared.NotFoundException].
+     *  Системных пресетов для событий нет, поэтому роль [isAdmin] на события не влияет. */
+    fun update(userId: Long, id: Long, command: UpdateCatalogEvent, isAdmin: Boolean): CatalogEvent
 
     /** Удаляет своё событие; чужое/несуществующее — [com.aura.shared.NotFoundException]. */
     fun delete(userId: Long, id: Long)

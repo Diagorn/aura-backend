@@ -11,6 +11,19 @@ class CatalogItemNameAlreadyExistsException :
         message = "Элемент справочника с таким названием уже существует",
     )
 
+/**
+ * Действие над системным элементом справочника не разрешено — 403.
+ * По умолчанию — правка полей не админом; удаление системных запрещено никем
+ * (см. message в точке выброса).
+ */
+class SystemItemForbiddenException(
+    message: String = "Системные элементы справочника может править только администратор",
+) : ApiException(
+    status = 403,
+    code = "SYSTEM_ITEM_FORBIDDEN",
+    message = message,
+)
+
 /** Некорректная шкала метрики: minValue не меньше maxValue — 422 VALIDATION_FAILED. */
 class InvalidMetricScaleException :
     ApiException(

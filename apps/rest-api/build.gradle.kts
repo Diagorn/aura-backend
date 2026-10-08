@@ -42,6 +42,8 @@ dependencies {
     testImplementation(libs.spring.boot.resttestclient)
     testImplementation(libs.testcontainers.postgresql)
     testImplementation(libs.testcontainers.junit.jupiter)
+    // SpringLiquibase в тесте идемпотентности seed (в main — runtimeOnly)
+    testImplementation(libs.liquibase.core)
 }
 
 // Генерация серверных интерфейсов + DTO из OpenAPI-спеки (см. docs/spec-first-workflow.md).

@@ -8,28 +8,22 @@ import org.springframework.data.repository.query.Param
 
 interface EventRepository : JpaRepository<EventEntity, Long> {
 
-    /** События пользователя; условие по системным оставлено для симметрии с остальными справочниками. */
+    /** Все события пользователя; условие по системным оставлено для симметрии с остальными справочниками. */
     @Query(
         """
         select e from EventEntity e
-        where (e.ownerUserId = :userId or e.ownerUserId is null)
-          and (:includeInactive = true or e.isActive = true)
+        where e.ownerUserId = :userId or (e.ownerUserId is null and e.isActive = true)
         order by e.sortOrder asc, e.id asc
         """,
     )
-    fun findVisible(@Param("userId") userId: Long, @Param("includeInactive") includeInactive: Boolean): List<EventEntity>
+    fun findAllForUser(@Param("userId") userId: Long): List<EventEntity>
 
     fun existsByOwnerUserIdAndName(ownerUserId: Long, name: String): Boolean
 
+    fun existsByOwnerUserIdIsNullAndName(name: String): Boolean
+
     fun findFirstByOwnerUserIdOrderBySortOrderDesc(ownerUserId: Long): EventEntity?
 
-    fun findByIdAndOwnerUserId(id: Long, ownerUserId: Long): EventEntity?
-
-    /**
-     * Забирает элемент пользователя или бросает [NotFoundException]:
-     * чужой и несуществующий не различаются — существование чужого не раскрываем.
-     * Поиск с throw живёт в репозитории, сервисы получают готовую сущность.
-     */
-    fun requireOwnedBy(id: Long, ownerUserId: Long): EventEntity =
-        findByIdAndOwnerUserId(id, ownerUserId) ?: throw NotFoundException("Событие не найдено")
+    /** Забирает элемент по id или бросает [NotFoundException] (fetch-or-throw — в репозитории). */
+    fun requireById(id: Long): EventEntity = findById(id).orElseThrow { NotFoundException("Событие не найдено") }
 }

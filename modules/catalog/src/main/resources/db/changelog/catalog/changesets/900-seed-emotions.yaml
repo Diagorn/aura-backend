@@ -1,0 +1,110 @@
+# Системные пресеты эмоций (context: seed) — см. docs/domain-model.md «Системные пресеты».
+# Идемпотентность: если системный набор уже есть (count > 0), changeset пропускается (MARK_RAN).
+# Пополнять набор должен ADMIN через API (PATCH системных) или отдельный чейнджсет окружения.
+databaseChangeLog:
+  - changeSet:
+      id: catalog-900-seed-emotions
+      author: Diagorn
+      context: seed
+      preConditions:
+        - onFail: MARK_RAN
+        - sqlCheck:
+            expectedResult: 0
+            sql: SELECT COUNT(*) FROM catalog.emotions WHERE owner_user_id IS NULL
+      changes:
+        - insert:
+            schemaName: catalog
+            tableName: emotions
+            columns:
+              - column: { name: name, value: 'Радость' }
+              - column: { name: is_active, valueBoolean: true }
+              - column: { name: sort_order, valueNumeric: 0 }
+        - insert:
+            schemaName: catalog
+            tableName: emotions
+            columns:
+              - column: { name: name, value: 'Спокойствие' }
+              - column: { name: is_active, valueBoolean: true }
+              - column: { name: sort_order, valueNumeric: 1 }
+        - insert:
+            schemaName: catalog
+            tableName: emotions
+            columns:
+              - column: { name: name, value: 'Благодарность' }
+              - column: { name: is_active, valueBoolean: true }
+              - column: { name: sort_order, valueNumeric: 2 }
+        - insert:
+            schemaName: catalog
+            tableName: emotions
+            columns:
+              - column: { name: name, value: 'Гордость' }
+              - column: { name: is_active, valueBoolean: true }
+              - column: { name: sort_order, valueNumeric: 3 }
+        - insert:
+            schemaName: catalog
+            tableName: emotions
+            columns:
+              - column: { name: name, value: 'Интерес' }
+              - column: { name: is_active, valueBoolean: true }
+              - column: { name: sort_order, valueNumeric: 4 }
+        - insert:
+            schemaName: catalog
+            tableName: emotions
+            columns:
+              - column: { name: name, value: 'Грусть' }
+              - column: { name: is_active, valueBoolean: true }
+              - column: { name: sort_order, valueNumeric: 5 }
+        - insert:
+            schemaName: catalog
+            tableName: emotions
+            columns:
+              - column: { name: name, value: 'Тревога' }
+              - column: { name: is_active, valueBoolean: true }
+              - column: { name: sort_order, valueNumeric: 6 }
+        - insert:
+            schemaName: catalog
+            tableName: emotions
+            columns:
+              - column: { name: name, value: 'Злость' }
+              - column: { name: is_active, valueBoolean: true }
+              - column: { name: sort_order, valueNumeric: 7 }
+        - insert:
+            schemaName: catalog
+            tableName: emotions
+            columns:
+              - column: { name: name, value: 'Страх' }
+              - column: { name: is_active, valueBoolean: true }
+              - column: { name: sort_order, valueNumeric: 8 }
+        - insert:
+            schemaName: catalog
+            tableName: emotions
+            columns:
+              - column: { name: name, value: 'Стыд' }
+              - column: { name: is_active, valueBoolean: true }
+              - column: { name: sort_order, valueNumeric: 9 }
+        - insert:
+            schemaName: catalog
+            tableName: emotions
+            columns:
+              - column: { name: name, value: 'Вина' }
+              - column: { name: is_active, valueBoolean: true }
+              - column: { name: sort_order, valueNumeric: 10 }
+        - insert:
+            schemaName: catalog
+            tableName: emotions
+            columns:
+              - column: { name: name, value: 'Усталость' }
+              - column: { name: is_active, valueBoolean: true }
+              - column: { name: sort_order, valueNumeric: 11 }
+        - insert:
+            schemaName: catalog
+            tableName: emotions
+            columns:
+              - column: { name: name, value: 'Одиночество' }
+              - column: { name: is_active, valueBoolean: true }
+              - column: { name: sort_order, valueNumeric: 12 }
+      rollback:
+        - delete:
+            schemaName: catalog
+            tableName: emotions
+            where: owner_user_id IS NULL

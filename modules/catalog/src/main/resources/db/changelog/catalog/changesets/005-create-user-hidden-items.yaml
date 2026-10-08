@@ -1,0 +1,29 @@
+databaseChangeLog:
+  - changeSet:
+      id: catalog-005-create-user-hidden-items
+      author: Diagorn
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+            - tableExists:
+                schemaName: catalog
+                tableName: user_hidden_items
+      changes:
+        - createTable:
+            schemaName: catalog
+            tableName: user_hidden_items
+            columns:
+              - column: { name: id, type: bigint, autoIncrement: true, constraints: { primaryKey: true, primaryKeyName: pk_user_hidden_items } }
+              - column: { name: user_id, type: bigint, constraints: { nullable: false } }
+              - column: { name: item_type, type: varchar(16), constraints: { nullable: false } }
+              - column: { name: item_id, type: bigint, constraints: { nullable: false } }
+              - column: { name: created_at, type: timestamptz, defaultValueComputed: now(), constraints: { nullable: false } }
+        - addUniqueConstraint:
+            schemaName: catalog
+            tableName: user_hidden_items
+            columnNames: user_id, item_type, item_id
+            constraintName: uq_user_hidden_items
+      rollback:
+        - dropTable:
+            schemaName: catalog
+            tableName: user_hidden_items

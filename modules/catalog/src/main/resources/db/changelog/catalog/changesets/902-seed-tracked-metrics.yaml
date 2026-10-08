@@ -1,0 +1,53 @@
+# Системные пресеты отслеживаемых метрик (context: seed), шкала 1–5 — идемпотентность, как у seed эмоций.
+databaseChangeLog:
+  - changeSet:
+      id: catalog-902-seed-tracked-metrics
+      author: Diagorn
+      context: seed
+      preConditions:
+        - onFail: MARK_RAN
+        - sqlCheck:
+            expectedResult: 0
+            sql: SELECT COUNT(*) FROM catalog.tracked_metrics WHERE owner_user_id IS NULL
+      changes:
+        - insert:
+            schemaName: catalog
+            tableName: tracked_metrics
+            columns:
+              - column: { name: name, value: 'Настроение' }
+              - column: { name: min_value, valueNumeric: 1 }
+              - column: { name: max_value, valueNumeric: 5 }
+              - column: { name: is_active, valueBoolean: true }
+              - column: { name: sort_order, valueNumeric: 0 }
+        - insert:
+            schemaName: catalog
+            tableName: tracked_metrics
+            columns:
+              - column: { name: name, value: 'Энергия' }
+              - column: { name: min_value, valueNumeric: 1 }
+              - column: { name: max_value, valueNumeric: 5 }
+              - column: { name: is_active, valueBoolean: true }
+              - column: { name: sort_order, valueNumeric: 1 }
+        - insert:
+            schemaName: catalog
+            tableName: tracked_metrics
+            columns:
+              - column: { name: name, value: 'Тревожность' }
+              - column: { name: min_value, valueNumeric: 1 }
+              - column: { name: max_value, valueNumeric: 5 }
+              - column: { name: is_active, valueBoolean: true }
+              - column: { name: sort_order, valueNumeric: 2 }
+        - insert:
+            schemaName: catalog
+            tableName: tracked_metrics
+            columns:
+              - column: { name: name, value: 'Либидо' }
+              - column: { name: min_value, valueNumeric: 1 }
+              - column: { name: max_value, valueNumeric: 5 }
+              - column: { name: is_active, valueBoolean: true }
+              - column: { name: sort_order, valueNumeric: 3 }
+      rollback:
+        - delete:
+            schemaName: catalog
+            tableName: tracked_metrics
+            where: owner_user_id IS NULL

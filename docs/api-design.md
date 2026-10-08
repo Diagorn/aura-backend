@@ -73,10 +73,10 @@
 
 | Метод | Путь | Описание |
 |---|---|---|
-| GET | `/api/v1/catalog/emotions?includeInactive=false` | системные + персональные |
-| POST | `/api/v1/catalog/emotions` | создать персональную → 201 |
-| PATCH | `/api/v1/catalog/emotions/{id}` | правка/деактивация (`{isActive: false}`); системные → 403 |
-| DELETE | `/api/v1/catalog/emotions/{id}` | только персональные |
+| GET | `/api/v1/catalog/emotions?includeInactive=false` | системные пресеты + персональные; деактивированные персональные и скрытые пользователем системные — только с `includeInactive=true` (`isActive=false`) |
+| POST | `/api/v1/catalog/emotions` | создать персональную → 201 (имя уникально в рамках пользователя; дубль имени системного — легален) |
+| PATCH | `/api/v1/catalog/emotions/{id}` | персональная — правка/деактивация владельцем; системная: `{isActive:false\|true}` — скрыть/вернуть для себя, правка полей — только ADMIN (403 `SYSTEM_ITEM_FORBIDDEN`) |
+| DELETE | `/api/v1/catalog/emotions/{id}` | только персональные; системные не удаляются никем (403) |
 
 Метрики дополнительно отдают шкалу: `{id, name, minValue, maxValue, unit, isActive}`.
 

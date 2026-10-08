@@ -41,7 +41,10 @@ class CatalogController(
         created(emotions.create(CurrentUser.requireUserId(), createEmotionRequest.toCommand()).toResponse())
 
     override fun updateEmotion(id: Long, updateEmotionRequest: UpdateEmotionRequest): ResponseEntity<EmotionResponse> =
-        ResponseEntity.ok(emotions.update(CurrentUser.requireUserId(), id, updateEmotionRequest.toCommand()).toResponse())
+        ResponseEntity.ok(
+            emotions.update(CurrentUser.requireUserId(), id, updateEmotionRequest.toCommand(), CurrentUser.isAdmin())
+                .toResponse(),
+        )
 
     override fun deleteEmotion(id: Long): ResponseEntity<Unit> {
         emotions.delete(CurrentUser.requireUserId(), id)
@@ -55,7 +58,10 @@ class CatalogController(
         created(factors.create(CurrentUser.requireUserId(), createFactorRequest.toCommand()).toResponse())
 
     override fun updateFactor(id: Long, updateFactorRequest: UpdateFactorRequest): ResponseEntity<FactorResponse> =
-        ResponseEntity.ok(factors.update(CurrentUser.requireUserId(), id, updateFactorRequest.toCommand()).toResponse())
+        ResponseEntity.ok(
+            factors.update(CurrentUser.requireUserId(), id, updateFactorRequest.toCommand(), CurrentUser.isAdmin())
+                .toResponse(),
+        )
 
     override fun deleteFactor(id: Long): ResponseEntity<Unit> {
         factors.delete(CurrentUser.requireUserId(), id)
@@ -69,7 +75,10 @@ class CatalogController(
         created(events.create(CurrentUser.requireUserId(), createEventRequest.toCommand()).toResponse())
 
     override fun updateEvent(id: Long, updateEventRequest: UpdateEventRequest): ResponseEntity<EventResponse> =
-        ResponseEntity.ok(events.update(CurrentUser.requireUserId(), id, updateEventRequest.toCommand()).toResponse())
+        ResponseEntity.ok(
+            events.update(CurrentUser.requireUserId(), id, updateEventRequest.toCommand(), CurrentUser.isAdmin())
+                .toResponse(),
+        )
 
     override fun deleteEvent(id: Long): ResponseEntity<Unit> {
         events.delete(CurrentUser.requireUserId(), id)
@@ -83,7 +92,10 @@ class CatalogController(
         created(metrics.create(CurrentUser.requireUserId(), createMetricRequest.toCommand()).toResponse())
 
     override fun updateMetric(id: Long, updateMetricRequest: UpdateMetricRequest): ResponseEntity<MetricResponse> =
-        ResponseEntity.ok(metrics.update(CurrentUser.requireUserId(), id, updateMetricRequest.toCommand()).toResponse())
+        ResponseEntity.ok(
+            metrics.update(CurrentUser.requireUserId(), id, updateMetricRequest.toCommand(), CurrentUser.isAdmin())
+                .toResponse(),
+        )
 
     override fun deleteMetric(id: Long): ResponseEntity<Unit> {
         metrics.delete(CurrentUser.requireUserId(), id)

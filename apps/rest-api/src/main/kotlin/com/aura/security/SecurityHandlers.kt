@@ -51,4 +51,12 @@ object CurrentUser {
         }
         return principal.userId ?: error("Сервисный токен не имеет userId — /api/v1 недоступен для него")
     }
+
+    /** Роль ADMIN у текущего пользователя? (правка системных элементов справочников) */
+    fun isAdmin(): Boolean {
+        val principal = SecurityContextHolder.getContext().authentication?.principal
+        return principal is TokenPrincipal && ROLE_ADMIN in principal.roles
+    }
+
+    private const val ROLE_ADMIN = "ADMIN"
 }
