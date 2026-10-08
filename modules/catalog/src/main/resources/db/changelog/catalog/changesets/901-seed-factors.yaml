@@ -1,0 +1,73 @@
+# Системные пресеты факторов (context: seed) — идемпотентность, как у seed эмоций.
+databaseChangeLog:
+  - changeSet:
+      id: catalog-901-seed-factors
+      author: Diagorn
+      context: seed
+      preConditions:
+        - onFail: MARK_RAN
+        - sqlCheck:
+            expectedResult: 0
+            sql: SELECT COUNT(*) FROM catalog.factors WHERE owner_user_id IS NULL
+      changes:
+        - insert:
+            schemaName: catalog
+            tableName: factors
+            columns:
+              - column: { name: name, value: 'Сон' }
+              - column: { name: is_active, valueBoolean: true }
+              - column: { name: sort_order, valueNumeric: 0 }
+        - insert:
+            schemaName: catalog
+            tableName: factors
+            columns:
+              - column: { name: name, value: 'Работа/учёба' }
+              - column: { name: is_active, valueBoolean: true }
+              - column: { name: sort_order, valueNumeric: 1 }
+        - insert:
+            schemaName: catalog
+            tableName: factors
+            columns:
+              - column: { name: name, value: 'Спорт' }
+              - column: { name: is_active, valueBoolean: true }
+              - column: { name: sort_order, valueNumeric: 2 }
+        - insert:
+            schemaName: catalog
+            tableName: factors
+            columns:
+              - column: { name: name, value: 'Общение' }
+              - column: { name: is_active, valueBoolean: true }
+              - column: { name: sort_order, valueNumeric: 3 }
+        - insert:
+            schemaName: catalog
+            tableName: factors
+            columns:
+              - column: { name: name, value: 'Еда' }
+              - column: { name: is_active, valueBoolean: true }
+              - column: { name: sort_order, valueNumeric: 4 }
+        - insert:
+            schemaName: catalog
+            tableName: factors
+            columns:
+              - column: { name: name, value: 'Погода' }
+              - column: { name: is_active, valueBoolean: true }
+              - column: { name: sort_order, valueNumeric: 5 }
+        - insert:
+            schemaName: catalog
+            tableName: factors
+            columns:
+              - column: { name: name, value: 'Здоровье' }
+              - column: { name: is_active, valueBoolean: true }
+              - column: { name: sort_order, valueNumeric: 6 }
+        - insert:
+            schemaName: catalog
+            tableName: factors
+            columns:
+              - column: { name: name, value: 'Деньги' }
+              - column: { name: is_active, valueBoolean: true }
+              - column: { name: sort_order, valueNumeric: 7 }
+      rollback:
+        - delete:
+            schemaName: catalog
+            tableName: factors
+            where: owner_user_id IS NULL

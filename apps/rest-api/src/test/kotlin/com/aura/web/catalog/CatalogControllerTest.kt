@@ -13,6 +13,7 @@ import com.aura.catalog.api.EventsPort
 import com.aura.catalog.api.FactorsPort
 import com.aura.catalog.api.MetricsPort
 import com.aura.catalog.api.TrackedMetric
+import com.aura.catalog.api.UpdateEmotion
 import com.aura.security.SecurityConfig
 import com.aura.security.WithMockAuraUser
 import com.aura.shared.NotFoundException
@@ -176,7 +177,7 @@ class CatalogControllerTest(
     @Test
     @WithMockAuraUser(userId = 7)
     fun updateEmotion_foreignOrMissing_returns404() {
-        every { emotions.update(7, 99, any()) } throws NotFoundException("Эмоция не найдена")
+        every { emotions.update(7, 99, any(), false) } throws NotFoundException("Эмоция не найдена")
 
         mockMvc.patch("/api/v1/catalog/emotions/99") {
             contentType = MediaType.APPLICATION_JSON
@@ -186,6 +187,30 @@ class CatalogControllerTest(
             content { contentTypeCompatibleWith(MediaType.APPLICATION_PROBLEM_JSON) }
             jsonPath("$.code") { value("NOT_FOUND") }
         }
+    }
+
+    @Test
+    @WithMockAuraUser(userId = 7, roles = ["ADMIN"])
+    fun updateEmotion_asAdmin_passesIsAdminFlag() {
+        every { emotions.update(7, 1, any(), true) } returns personal.copy(id = 1, isSystem = true)
+
+        mockMvc.patch("/api/v1/catalog/emotions/1") {
+            contentType = MediaType.APPLICATION_JSON
+            content = objectMapper.writeValueAsString(UpdateEmotionRequest(name = "Радость (обновлена)"))
+        }.andExpect {
+            status { isOk() }
+            jsonPath("$.system") { value(true) }
+        }
+
+        verify {
+            emotions.update(
+                7,
+                1,
+                withArg { command: UpdateEmotion -> assertThat(command.name).isEqualTo("Радость (обновлена)") },
+                true,
+            )
+        }
+        confirmVerified(emotions)
     }
 
     @Test

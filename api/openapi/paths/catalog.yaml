@@ -10,7 +10,8 @@ emotions:
     summary: Список эмоций
     description: >
       Системные пресеты и персональные эмоции пользователя, отсортированные по sortOrder.
-      По умолчанию деактивированные не отдаются; includeInactive=true добавляет их.
+      Деактивированные персональные и скрытые вами системные — только с includeInactive=true
+      (в ответе isActive=false).
     parameters:
       - name: includeInactive
         in: query
@@ -61,8 +62,9 @@ emotion:
     operationId: updateEmotion
     summary: Изменить/деактивировать свою эмоцию
     description: >
-      PATCH-семантика: изменяются только переданные поля. Правка чужой или несуществующей
-      эмоции — 404 (существование чужого не раскрываем); правка системной — 403.
+      PATCH-семантика: изменяются только переданные поля. Персональная эмоция правится
+      владельцем. Системная: {isActive:false|true} — скрыть/вернуть для себя; правка полей —
+      только ADMIN, иначе 403. Чужая или несуществующая эмоция — 404 (не раскрываем).
     parameters:
       - $ref: '../components/parameters.yaml#/itemId'
     requestBody:
@@ -93,7 +95,9 @@ emotion:
       - catalog
     operationId: deleteEmotion
     summary: Удалить свою эмоцию
-    description: Удаляются только персональные эмоции; системная — 403, чужая/несуществующая — 404.
+    description: >
+      Удаляются только персональные эмоции их владельцем; системные не удаляются никем (403),
+      чужие/несуществующие — 404.
     parameters:
       - $ref: '../components/parameters.yaml#/itemId'
     responses:
@@ -114,7 +118,8 @@ factors:
     summary: Список факторов
     description: >
       Системные пресеты и персональные факторы пользователя, отсортированные по sortOrder.
-      По умолчанию деактивированные не отдаются; includeInactive=true добавляет их.
+      Деактивированные персональные и скрытые вами системные — только с includeInactive=true
+      (в ответе isActive=false).
     parameters:
       - name: includeInactive
         in: query
@@ -165,8 +170,9 @@ factor:
     operationId: updateFactor
     summary: Изменить/деактивировать свой фактор
     description: >
-      PATCH-семантика: изменяются только переданные поля. Правка чужого или несуществующего
-      фактора — 404 (существование чужого не раскрываем); правка системного — 403.
+      PATCH-семантика: изменяются только переданные поля. Персональный фактор правится
+      владельцем. Системный: {isActive:false|true} — скрыть/вернуть для себя; правка полей —
+      только ADMIN, иначе 403. Чужой или несуществующий фактор — 404 (не раскрываем).
     parameters:
       - $ref: '../components/parameters.yaml#/itemId'
     requestBody:
@@ -197,7 +203,9 @@ factor:
       - catalog
     operationId: deleteFactor
     summary: Удалить свой фактор
-    description: Удаляются только персональные факторы; системный — 403, чужой/несуществующий — 404.
+    description: >
+      Удаляются только персональные факторы их владельцем; системные не удаляются никем (403),
+      чужие/несуществующие — 404.
     parameters:
       - $ref: '../components/parameters.yaml#/itemId'
     responses:
@@ -218,8 +226,7 @@ events:
     summary: Список событий
     description: >
       Персональные события пользователя (системных пресетов для событий нет),
-      отсортированные по sortOrder. По умолчанию деактивированные не отдаются;
-      includeInactive=true добавляет их.
+      отсортированные по sortOrder. Деактивированные — только с includeInactive=true.
     parameters:
       - name: includeInactive
         in: query
@@ -270,8 +277,8 @@ event:
     operationId: updateEvent
     summary: Изменить/деактивировать своё событие
     description: >
-      PATCH-семантика: изменяются только переданные поля. Правка чужого или несуществующего
-      события — 404 (существование чужого не раскрываем); правка системного — 403.
+      PATCH-семантика: изменяются только переданные поля. Событие правится владельцем;
+      системных пресетов для событий нет. Чужое или несуществующее событие — 404 (не раскрываем).
     parameters:
       - $ref: '../components/parameters.yaml#/itemId'
     requestBody:
@@ -302,7 +309,9 @@ event:
       - catalog
     operationId: deleteEvent
     summary: Удалить своё событие
-    description: Удаляются только персональные события; системное — 403, чужое/несуществующее — 404.
+    description: >
+      Удаляются только персональные события их владельцем; системные не удаляются никем (403),
+      чужие/несуществующие — 404.
     parameters:
       - $ref: '../components/parameters.yaml#/itemId'
     responses:
@@ -323,8 +332,8 @@ metrics:
     summary: Список отслеживаемых метрик
     description: >
       Системные пресеты и персональные метрики пользователя (настроение, энергия, тревожность…),
-      отсортированные по sortOrder. По умолчанию деактивированные не отдаются;
-      includeInactive=true добавляет их.
+      отсортированные по sortOrder. Деактивированные персональные и скрытые вами системные —
+      только с includeInactive=true (в ответе isActive=false).
     parameters:
       - name: includeInactive
         in: query
@@ -375,9 +384,9 @@ metric:
     operationId: updateMetric
     summary: Изменить/деактивировать свою метрику
     description: >
-      PATCH-семантика: изменяются только переданные поля. minValue должен быть меньше maxValue.
-      Правка чужой или несуществующей метрики — 404 (существование чужого не раскрываем);
-      правка системной — 403.
+      PATCH-семантика: изменяются только переданные поля; minValue должен быть меньше maxValue.
+      Персональная метрика правится владельцем. Системная: {isActive:false|true} — скрыть/вернуть
+      для себя; правка полей — только ADMIN, иначе 403. Чужая/несуществующая — 404.
     parameters:
       - $ref: '../components/parameters.yaml#/itemId'
     requestBody:
@@ -408,7 +417,9 @@ metric:
       - catalog
     operationId: deleteMetric
     summary: Удалить свою метрику
-    description: Удаляются только персональные метрики; системная — 403, чужая/несуществующая — 404.
+    description: >
+      Удаляются только персональные метрики их владельцем; системные не удаляются никем (403),
+      чужие/несуществующие — 404.
     parameters:
       - $ref: '../components/parameters.yaml#/itemId'
     responses:

@@ -38,10 +38,13 @@
 
 Семантика единая:
 
-- `list(userId, includeInactive)` — системные (с этапа 2.2) + персональные пользователя, `order by sort_order, id`; неактивные отдаются только с `includeInactive = true`;
-- `create` — создаёт персональный элемент; `sortOrder = null` → сервер присваивает следующий (max + 1);
-- `update` — PATCH-семантика: `null` поле не менять;
-- `delete` — только персональные.
+- `list(userId, includeInactive)` — системные (не скрытые пользователем) + персональные пользователя, `order by sort_order, id`; с `includeInactive = true` добавляются деактивированные персональные и скрытые системные (`isActive=false` в ответе);
+- `create` — создаёт персональный элемент (и для админа тоже); `sortOrder = null` → сервер присваивает следующий (max + 1);
+- `update(userId, id, command, isAdmin)` — PATCH-семантика (`null` поле не менять), роль берётся из JWT-клеймов (`CurrentUser.isAdmin()`):
+  - персональная запись — правит владелец;
+  - **системная + ADMIN** — правка полей системной строки (включая глобальную деактивацию `isActive`);
+  - **системная + USER** — только `{isActive:false|true}`: персональное скрытие/возврат через `user_hidden_items`; любые другие поля или пустой PATCH — 403;
+- `delete` — только персональные записи; системные не удаляются никем (403).
 
 ### 2.2 Ошибки (RFC 9457 problem+json)
 
@@ -49,14 +52,15 @@
 |---|---|---|
 | `CatalogItemNameAlreadyExistsException` | 409 | `NAME_ALREADY_EXISTS` |
 | `InvalidMetricScaleException` (minValue ≥ maxValue) | 422 | `VALIDATION_FAILED`, `errors=[{field: "maxValue"}]` |
+| `SystemItemForbiddenException` | 403 | `SYSTEM_ITEM_FORBIDDEN` (правка полей системного не админом, пустой PATCH системного, удаление системного) |
 | чужой или несуществующий элемент | 404 | `NOT_FOUND` (через `shared.NotFoundException` — существование чужого не раскрываем) |
-| правка системного не админом (этап 2.2) | 403 | `SYSTEM_ITEM_FORBIDDEN` |
 
 ## 3. Паттерн «системное + персональное»
 
 - `owner_user_id IS NULL` — системный пресет, общий для всех; иначе — персональный элемент владельца.
-- Системные элементы правят **только админы** (роль `ADMIN` из JWT; этап 2.2). Пользователи персонализируют: создают свои копии (дубль имени системного — легален) и деактивируют свои.
-- Уникальность `(owner_user_id, name)` в Postgres не действует для строк с `NULL` владельцем — системные наборы контролирует seed, персональные — БД + проверка в сервисе.
+- Системные элементы правит **только ADMIN** — через те же эндпоинты (роль — параметр `isAdmin` в `update`, значение из JWT-клеймов). Пользователи персонализируют: создают свои копии (дубль имени системного — легален), деактивируют свои записи и **скрывают системные лично**.
+- Персональное скрытие: `PATCH системного {isActive:false}` → запись `(user_id, EMOTION|FACTOR|EVENT|METRIC, item_id)` в `catalog.user_hidden_items`; `{isActive:true}` — возврат (идемпотентно). Скрытие влияет только на листинг этого пользователя; в ответе `isActive=false, system=true`.
+- Уникальность `(owner_user_id, name)` в Postgres не действует для строк с `NULL` владельцем — системные наборы контролирует seed, персональные — БД + проверка в сервисе (для админ-правок системной строки — `existsByOwnerUserIdIsNullAndName`).
 
 ## 4. Данные (схема `catalog`)
 
@@ -66,23 +70,29 @@
 | `factors` | `owner_user_id`, `name(100)`, `icon(128)`, `is_active`, `sort_order` | `pk_factors`, `uq_factors_owner_name` |
 | `events` | как `factors` | `pk_events`, `uq_events_owner_name` |
 | `tracked_metrics` | `owner_user_id`, `name(100)`, `min_value numeric`, `max_value numeric`, `unit(16)`, `is_active`, `sort_order` | `pk_tracked_metrics`, `uq_tracked_metrics_owner_name` |
+| `user_hidden_items` | `user_id`, `item_type (EMOTION\|FACTOR\|EVENT\|METRIC)`, `item_id`, `created_at` | `pk_user_hidden_items`, `uq_user_hidden_items (user_id, item_type, item_id)` |
 
-- Чейнджлоги: `db/changelog/catalog/changesets/` — `000-create-schema`, `001-create-emotions`, `002-create-factors`, `003-create-events`, `004-create-tracked-metrics`; с этапа 2.2 — `005-create-user-hidden-items` (пер-пользовательское скрытие системных) и `900-seed-*` (пресеты, context `seed`).
-- FK в схеме нет: `owner_user_id` — ссылка на `auth.users.id` по договорённости, без FK (правило границ модулей).
-- Запросы листинга (`findVisible`) уже учитывают системные строки (`owner_user_id IS NULL`) — готовы к этапу 2.2.
+- Чейнджлоги: `db/changelog/catalog/changesets/` — `000-create-schema`, `001…004` (таблицы справочников), `005-create-user-hidden-items`, seed `900-seed-emotions` (13 пресетов), `901-seed-factors` (8), `902-seed-tracked-metrics` (4) — `context: seed`, идемпотентны (preCondition «системный набор пуст» + `MARK_RAN`).
+- FK в схеме нет: `owner_user_id`/`user_id`/`item_id` — ссылки по договорённости, без FK (правило границ модулей); целостность скрытия — в сервисе.
+- Листинг: репозитарный `findAllForUser(userId)` возвращает свои (любые) + активные системные; сервис вычитает скрытые (`findItemIds`) и фильтрует по `includeInactive`, проставляя `isActive` глазами пользователя.
 - Поиск с throw («найти свой элемент или 404») живёт в репозиториях: `requireOwnedBy(id, ownerUserId)` поверх derived-запроса `findByIdAndOwnerUserId`. Сервисы получают готовую сущность и не содержат `findById().orElseThrow()`.
 - Точка записи — явная: `create` и `update` завершаются вызовом `save()` (хотя dirty checking Hibernate сохранил бы изменения и без него — явный вызов делает место записи видимым в коде).
 
 ## 5. Интеграция в приложение (`apps/rest-api`)
 
-- `web.catalog.CatalogController` реализует сгенерированный `CatalogApi` (тег `catalog`, 16 операций `/api/v1/catalog/{emotions,factors,events,metrics}`); маппинг контракта — `web.catalog.CatalogResponses` (алиасы `Valence` между `com.aura.api.model` и `com.aura.catalog.api`).
-- Публичные маршруты защищены пользовательским JWT (`/api/v1/**` → `ROLE_USER|ROLE_ADMIN`, см. `SecurityConfig`); идентификатор пользователя — `CurrentUser.requireUserId()`.
+- `web.catalog.CatalogController` реализует сгенерированный `CatalogApi` (тег `catalog`, 16 операций `/api/v1/catalog/{emotions,factors,events,metrics}`); маппинг контракта — `web.catalog.CatalogResponses`.
+- Публичные маршруты защищены пользовательским JWT (`/api/v1/**` → `ROLE_USER|ROLE_ADMIN`, см. `SecurityConfig`); в сервисы передаются `CurrentUser.requireUserId()` и `CurrentUser.isAdmin()` (роль из JWT-клеймов).
 - Транзакции — в сервисах модуля; контроллер их не открывает (проверяется `ArchitectureTest`).
 
 ## 6. Тесты
 
-- `CatalogControllerTest` (`@WebMvcTest`): маппинг контракта, 201/200/204, 401, 404 (чужое), 409 (дубль имени), 422 (имя 1–100, Bean Validation на сгенерированных DTO); MockK-порты, `@WithMockAuraUser`.
-- `CatalogFlowIntegrationTest` (`@SpringBootTest` + Testcontainers Postgres + Liquibase master): полный CRUD эмоций c изоляцией пользователей, дефолты и валидация шкалы метрик, CRUD факторов/событий, идемпотентность ошибок.
+- `CatalogControllerTest` (`@WebMvcTest`): маппинг контракта, 201/200/204, 401, 404 (чужое), 409 (дубль имени), 422 (имя 1–100, Bean Validation на сгенерированных DTO); проброс `isAdmin` из роли в порт; MockK-порты, `@WithMockAuraUser`.
+- `CatalogFlowIntegrationTest` (`@SpringBootTest` + Testcontainers Postgres + Liquibase master):
+  - системные пресеты видны новому пользователю (13 эмоций / 8 факторов / 4 метрики, события — пусто);
+  - идемпотентность seed: seed-чейнджсеты удаляются из `DATABASECHANGELOG`, повторный прогон переоценивает preConditions (`MARK_RAN`) и не дублирует строки;
+  - скрытие/возврат системной эмоции (`{isActive}`), изоляция пользователей, 403 на правку полей и удаление системного;
+  - ADMIN правит системную строку через тот же эндпоинт (глобальный эффект), глобальная деактивация убирает элемент у всех;
+  - персональный CRUD по всем справочникам, уникальность имён, шкала метрик.
 - `ArchitectureTest`: `catalog.internal` недоступен снаружи; модуль не зависит от web/security-слоёв.
 - `ModulithVerificationTest`: границы `com.aura.catalog.api`.
 

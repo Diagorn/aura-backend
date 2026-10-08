@@ -27,6 +27,7 @@ erDiagram
     users ||--o{ factors : "кастомизирует"
     users ||--o{ events : "кастомизирует"
     users ||--o{ tracked_metrics : "кастомизирует"
+    users ||--o{ user_hidden_items : "скрывает системные"
     users ||--o{ reminder_schedules : configures
     entries ||--o{ entry_emotions : ""
     entries ||--o{ entry_factors : ""
@@ -97,6 +98,13 @@ erDiagram
         bool is_active
         int sort_order
     }
+    user_hidden_items {
+        bigint id PK
+        bigint user_id FK
+        varchar item_type "EMOTION | FACTOR | EVENT | METRIC"
+        bigint item_id "id системной записи, без FK"
+        timestamptz created_at
+    }
     entries {
         bigint id PK
         bigint user_id FK
@@ -159,14 +167,14 @@ erDiagram
 | Схема | Таблицы |
 |---|---|
 | `auth` | `users`, `refresh_tokens`, `telegram_link_codes` |
-| `catalog` | `emotions`, `factors`, `events`, `tracked_metrics` |
+| `catalog` | `emotions`, `factors`, `events`, `tracked_metrics`, `user_hidden_items` |
 | `entry` | `entries`, `entry_emotions`, `entry_factors`, `entry_events`, `entry_metrics` |
 | `note` | `notes`, `note_templates` |
 | `notification` | `reminder_schedules` (+ очередь «due», см. ниже) |
 
 Правила:
 - FK — только внутри своей схемы. Связи между модулями — по идентификаторам без FK.
-- Справочные записи (`emotions`, `factors`, `events`, `tracked_metrics`, `note_templates`) поддерживают паттерн «системное + персональное»: `owner_user_id IS NULL` — системное, иначе персональное. Пользователь не может править системные записи; вместо этого деактивирует их и создаёт свои.
+- Справочные записи (`emotions`, `factors`, `events`, `tracked_metrics`, `note_templates`) поддерживают паттерн «системное + персональное»: `owner_user_id IS NULL` — системное, иначе персональное. Системные записи правит только **ADMIN** (через те же эндпоинты); пользователь персонализирует каталог: создаёт свои копии, деактивирует свои записи и **скрывает системные лично** (таблица `catalog.user_hidden_items`, влияет только на его листинг). Системные записи не удаляются никем.
 
 ## Жизненный цикл записи
 
@@ -209,7 +217,7 @@ stateDiagram-v2
 | События | без пресетов — события строго персональны |
 | Шаблоны заметок | 2–3 системных (например, «Итоги дня», «Триггеры дня») |
 
-Seed выполняется Liquibase-чейнджлогом с context `seed` (см. [liquibase-migrations.md](liquibase-migrations.md)). `ADMIN` может пополнять системные наборы.
+Seed выполняется Liquibase-чейнджлогом с context `seed` (см. [liquibase-migrations.md](liquibase-migrations.md)). **ADMIN** может править системные наборы через API (поля системной строки, глобальная деактивация) и пополнять их — отдельные админ-эндпоинты появления позже.
 
 ## Ключевые валидации
 
